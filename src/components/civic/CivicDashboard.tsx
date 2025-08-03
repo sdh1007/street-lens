@@ -205,7 +205,7 @@ export const CivicDashboard: React.FC = () => {
           </div>
 
           {/* Main Content Area - Full Width Map */}
-          <div className="px-4 sm:px-6 pb-6">
+          <div className={`px-4 sm:px-6 pb-6 transition-all duration-500 ${showVideoFeed ? 'ml-[500px]' : ''}`}>
             <div className="h-[75vh] min-h-[600px] relative">
               <div className="h-full rounded-xl overflow-hidden shadow-xl modern-glow animate-fade-in">
                 <InteractiveMap 
