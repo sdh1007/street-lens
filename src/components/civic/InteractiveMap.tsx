@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Detection, GPSPoint } from '@/types/civic';
-import { MapPin, Layers, Satellite, Navigation, Eye } from 'lucide-react';
+import { MapPin, Layers, Satellite, Navigation, Eye, Maximize2, Minimize2 } from 'lucide-react';
 import { HeatmapReportsModal } from './HeatmapReportsModal';
 import { StreetViewModal } from './StreetViewModal';
 
@@ -39,6 +39,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>('trash');
   const [showStreetViewModal, setShowStreetViewModal] = useState(false);
   const [streetViewLocation, setStreetViewLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isMapFullscreen, setIsMapFullscreen] = useState(false);
 
   // Heatmap category configurations
   const heatmapCategories = {
@@ -321,7 +322,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   }, [activeCategories, viewMode, isMapLoaded]);
 
   return (
-    <Card className={`overflow-hidden shadow-xl ${className}`}>
+    <Card className={`overflow-hidden shadow-xl ${className} ${isMapFullscreen ? 'fixed inset-0 z-50' : ''}`}>
       {/* Enhanced Header */}
       <div className="p-4 sm:p-6 border-b bg-gradient-to-r from-civic-navy via-civic-blue-light to-civic-navy text-white">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
@@ -344,6 +345,18 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
                 {viewMode === 'heatmap' ? 'Heatmap' : 'Markers'}
               </span>
             </Button>
+            
+            <div className="flex gap-1">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setIsMapFullscreen(!isMapFullscreen)}
+                className="text-white hover:bg-white/20 h-8 w-8 p-0 hover-lift focus-ring"
+                title={isMapFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+              >
+                {isMapFullscreen ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
+              </Button>
+            </div>
             
             <div className="flex gap-1">
               <Button
@@ -379,7 +392,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       </div>
       
       {/* Enhanced Map Container */}
-      <div className="relative h-[500px] animate-fade-in">
+      <div className={`relative ${isMapFullscreen ? 'h-screen' : 'h-[500px]'} animate-fade-in`}>
         <div ref={mapRef} className="w-full h-full" />
         
         {/* Enhanced Loading State */}
