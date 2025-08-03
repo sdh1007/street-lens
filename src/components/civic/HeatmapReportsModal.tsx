@@ -294,7 +294,7 @@ export const HeatmapReportsModal: React.FC<HeatmapReportsModalProps> = ({
                               onMouseEnter={() => {
                                 hoverTimeoutRefs.current[report.id] = setTimeout(() => {
                                   setHoveredReportId(report.id);
-                                }, 3000);
+                                }, 1000);
                               }}
                               onMouseLeave={() => {
                                 if (hoverTimeoutRefs.current[report.id]) {

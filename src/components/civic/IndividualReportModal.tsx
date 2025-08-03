@@ -192,7 +192,7 @@ export const IndividualReportModal: React.FC<IndividualReportModalProps> = ({
                   onMouseEnter={() => {
                     hoverTimeoutRef.current = setTimeout(() => {
                       setShowPreview(true);
-                    }, 3000);
+                    }, 1000);
                   }}
                   onMouseLeave={() => {
                     if (hoverTimeoutRef.current) {
