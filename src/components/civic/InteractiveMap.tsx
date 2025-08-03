@@ -1104,7 +1104,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           onClose={() => setShowStreetViewModal(false)}
           lat={streetViewLocation?.lat || 0}
           lng={streetViewLocation?.lng || 0}
-          showBackButton={false}
+          showBackButton={true}
+          onBackToReport={() => setShowStreetViewModal(false)}
         />
       </div>
     </Card>
