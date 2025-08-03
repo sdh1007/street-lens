@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Detection } from '@/types/civic';
-import { MapPin, Clock, Target, User, Camera } from 'lucide-react';
+import { MapPin, Clock, Target, User, Camera, Eye } from 'lucide-react';
 
 interface HeatmapReportsModalProps {
   isOpen: boolean;
@@ -11,6 +11,7 @@ interface HeatmapReportsModalProps {
   reports: Detection[];
   location: { lat: number; lng: number } | null;
   category: string;
+  onViewStreetView: (lat: number, lng: number) => void;
 }
 
 export const HeatmapReportsModal: React.FC<HeatmapReportsModalProps> = ({
@@ -18,7 +19,8 @@ export const HeatmapReportsModal: React.FC<HeatmapReportsModalProps> = ({
   onClose,
   reports,
   location,
-  category
+  category,
+  onViewStreetView
 }) => {
   const getDetectionTypeLabel = (type: Detection['type']) => {
     switch (type) {
@@ -134,11 +136,7 @@ export const HeatmapReportsModal: React.FC<HeatmapReportsModalProps> = ({
               reports.map((report, index) => (
                 <div
                   key={report.id}
-                  className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                  onClick={() => {
-                    // This would normally open the specific report details
-                    console.log('Opening report:', report.id);
-                  }}
+                  className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex gap-4">
                     {/* Report Type Icon */}
@@ -169,7 +167,7 @@ export const HeatmapReportsModal: React.FC<HeatmapReportsModalProps> = ({
                         {report.description}
                       </p>
 
-                      <div className="flex justify-between items-center text-xs">
+                      <div className="flex justify-between items-center text-xs mb-3">
                         <div className="flex items-center gap-4">
                           <div className="flex items-center gap-1">
                             <MapPin className="h-3 w-3 text-gray-400" />
@@ -196,6 +194,26 @@ export const HeatmapReportsModal: React.FC<HeatmapReportsModalProps> = ({
                           </span>
                         </div>
                       </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => onViewStreetView(report.location.lat, report.location.lng)}
+                          className="flex-1 bg-civic-navy text-white text-xs py-2 px-3 rounded hover:bg-civic-blue-light transition-colors flex items-center justify-center gap-1"
+                        >
+                          <Eye className="h-3 w-3" />
+                          View Street View
+                        </button>
+                        <button
+                          onClick={() => {
+                            console.log('Opening report details:', report.id);
+                          }}
+                          className="flex-1 bg-gray-500 text-white text-xs py-2 px-3 rounded hover:bg-gray-600 transition-colors flex items-center justify-center gap-1"
+                        >
+                          <Camera className="h-3 w-3" />
+                          View Recording
+                        </button>
+                      </div>
                     </div>
                   </div>
 
@@ -217,7 +235,7 @@ export const HeatmapReportsModal: React.FC<HeatmapReportsModalProps> = ({
         {reports.length > 0 && (
           <div className="pt-4 border-t">
             <div className="flex justify-between items-center text-sm text-gray-600">
-              <span>Click any report to view recorded footage and full details</span>
+              <span>Use "View Street View" to see the exact location, or "View Recording" for evidence</span>
               <span>{reports.length} total {reports.length === 1 ? 'report' : 'reports'}</span>
             </div>
           </div>

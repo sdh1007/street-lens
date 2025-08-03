@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Detection, GPSPoint } from '@/types/civic';
 import { MapPin, Layers, Satellite, Navigation, Eye } from 'lucide-react';
 import { HeatmapReportsModal } from './HeatmapReportsModal';
+import { StreetViewModal } from './StreetViewModal';
 
 interface InteractiveMapProps {
   detections: Detection[];
@@ -27,7 +28,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const heatmapLayers = useRef<{ [key: string]: any }>({});
   const [mapType, setMapType] = useState<'roadmap' | 'satellite' | 'hybrid'>('roadmap');
   const [isMapLoaded, setIsMapLoaded] = useState(false);
-  const [showStreetView, setShowStreetView] = useState(false);
   const [selectedDetection, setSelectedDetection] = useState<Detection | null>(null);
   const [viewMode, setViewMode] = useState<'markers' | 'heatmap'>('heatmap');
   const [activeCategories, setActiveCategories] = useState<Set<string>>(
@@ -37,6 +37,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const [selectedReports, setSelectedReports] = useState<Detection[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('trash');
+  const [showStreetViewModal, setShowStreetViewModal] = useState(false);
+  const [streetViewLocation, setStreetViewLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   // Heatmap category configurations
   const heatmapCategories = {
@@ -233,6 +235,13 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       newCategories.add(category);
     }
     setActiveCategories(newCategories);
+  };
+
+  // Handle street view opening
+  const handleViewStreetView = (lat: number, lng: number) => {
+    setStreetViewLocation({ lat, lng });
+    setShowStreetViewModal(true);
+    setShowReportsModal(false); // Close reports modal when opening street view
   };
 
   const toggleViewMode = () => {
@@ -451,6 +460,15 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           reports={selectedReports}
           location={selectedLocation}
           category={selectedCategory}
+          onViewStreetView={handleViewStreetView}
+        />
+
+        {/* Street View Modal */}
+        <StreetViewModal
+          isOpen={showStreetViewModal}
+          onClose={() => setShowStreetViewModal(false)}
+          lat={streetViewLocation?.lat || 0}
+          lng={streetViewLocation?.lng || 0}
         />
       </div>
     </Card>
