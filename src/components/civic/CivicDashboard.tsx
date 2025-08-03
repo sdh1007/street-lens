@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
-import { RecordedVideoPlayer } from './RecordedVideoPlayer';
 import { InteractiveMap } from './InteractiveMap';
+import { VideoFeedOverlay } from './VideoFeedOverlay';
 import { Detection, GPSPoint } from '@/types/civic';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useGeocoding } from '@/hooks/useGeocoding';
@@ -9,7 +8,7 @@ import { useSFCivicData } from '@/hooks/useSFCivicData';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Navigation, GripVertical, Wifi, Shield } from 'lucide-react';
+import { MapPin, Navigation, Wifi, Shield, Video } from 'lucide-react';
 
 export const CivicDashboard: React.FC = () => {
   // Real geolocation hook
@@ -31,6 +30,9 @@ export const CivicDashboard: React.FC = () => {
   
   // Map fullscreen state
   const [isMapFullscreen, setIsMapFullscreen] = useState(false);
+  
+  // Video feed overlay state
+  const [showVideoFeed, setShowVideoFeed] = useState(false);
 
   // Real SF 311 data
   const { detections: sfDetections, isLoading: isSFDataLoading, error: sfDataError } = useSFCivicData({ showPastCases });
@@ -99,6 +101,11 @@ export const CivicDashboard: React.FC = () => {
     setIsMapFullscreen(fullscreen);
   };
 
+  // Handle video feed toggle
+  const handleToggleVideoFeed = () => {
+    setShowVideoFeed(!showVideoFeed);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
       {/* Modern Professional Header */}
@@ -145,9 +152,9 @@ export const CivicDashboard: React.FC = () => {
         </Card>
       </div>
 
-      {/* Modern Main Content Area */}
+      {/* Main Content Area - Full Width Map */}
       <div className="px-4 sm:px-6 pb-6">
-        <div className="h-[75vh] min-h-[600px]">
+        <div className="h-[75vh] min-h-[600px] relative">
           {isMapFullscreen ? (
             // Fullscreen Map Layout
             <div className="h-full rounded-xl overflow-hidden shadow-xl modern-glow animate-fade-in">
@@ -188,78 +195,67 @@ export const CivicDashboard: React.FC = () => {
               )}
             </div>
           ) : (
-            // Normal Two-Panel Layout
-            <PanelGroup direction="horizontal" className="h-full rounded-xl overflow-hidden shadow-xl modern-glow">
-              {/* Video Player Panel */}
-              <Panel defaultSize={50} minSize={35} className="relative">
-                <div className="h-full animate-fade-in video-modern">
-                  <RecordedVideoPlayer
-                    currentLocation={currentLocation}
-                    locationAddress={geocodingResult?.formatted}
-                    submittedBy="Civic Reporter #1247"
-                    submittedAt={new Date(Date.now() - 300000).toISOString()}
-                    className="h-full rounded-none border-none shadow-none"
-                  />
-                </div>
-              </Panel>
+            // Normal Full Width Map Layout
+            <div className="h-full rounded-xl overflow-hidden shadow-xl modern-glow animate-fade-in">
+              <InteractiveMap 
+                detections={sfDetections}
+                gpsTrail={gpsTrail}
+                currentLocation={currentLocation}
+                className="h-full"
+                showPastCases={showPastCases}
+                onTogglePastCases={setShowPastCases}
+                isMapFullscreen={isMapFullscreen}
+                onToggleFullscreen={handleToggleFullscreen}
+              />
               
-              {/* Modern Resize Handle */}
-              <PanelResizeHandle className="w-1 bg-gradient-to-b from-civic-navy via-civic-blue-light to-civic-navy hover:w-2 transition-all duration-300 relative group modern-glow">
-                <div className="absolute inset-y-0 left-1/2 transform -translate-x-1/2 w-0.5 bg-gradient-to-b from-transparent via-white to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <div className="w-6 h-6 bg-gradient-to-br from-civic-navy to-civic-blue-light rounded-full flex items-center justify-center shadow-lg">
-                    <GripVertical className="h-3 w-3 text-white" />
-                  </div>
-                </div>
-              </PanelResizeHandle>
+              {/* Floating Video Feed Button */}
+              <Button
+                onClick={handleToggleVideoFeed}
+                className="absolute bottom-6 left-6 bg-civic-navy hover:bg-civic-blue-light text-white shadow-lg z-20 flex items-center gap-2 modern-glow hover-lift-modern"
+                size="lg"
+              >
+                <Video className="h-5 w-5" />
+                <span className="font-medium">Video Feed</span>
+              </Button>
               
-              {/* Map Panel */}
-              <Panel defaultSize={50} minSize={25} className="relative">
-                <div className="h-full p-3 bg-gradient-to-br from-muted/20 to-background animate-slide-in-right">
-                  {/* Map Container */}
-                  <div className="h-full rounded-xl overflow-hidden shadow-xl hover-lift-modern">
-                    <InteractiveMap 
-                      detections={sfDetections}
-                      gpsTrail={gpsTrail}
-                      currentLocation={currentLocation}
-                      className="h-full"
-                      showPastCases={showPastCases}
-                      onTogglePastCases={setShowPastCases}
-                      isMapFullscreen={isMapFullscreen}
-                      onToggleFullscreen={handleToggleFullscreen}
-                    />
-                  </div>
-                  
-                  {/* Modern Location Error Display */}
-                  {locationError && (
-                    <Card className="absolute bottom-4 left-4 right-4 glass-card border-destructive/30 animate-scale-in">
-                      <div className="p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 bg-gradient-to-br from-destructive to-destructive/80 rounded-full flex items-center justify-center mt-0.5 shadow-sm">
-                            <MapPin className="h-3 w-3 text-white" />
-                          </div>
-                          <div className="flex-1 space-y-2">
-                            <p className="text-sm font-medium text-destructive">Location Services Error</p>
-                            <p className="text-xs text-muted-foreground leading-relaxed">{locationError}</p>
-                            <Button 
-                              size="sm" 
-                              className="modern-button mt-2 h-8 text-xs"
-                              onClick={getCurrentPosition}
-                            >
-                              <Navigation className="h-3 w-3 mr-1" />
-                              Retry Location
-                            </Button>
-                          </div>
-                        </div>
+              {/* Modern Location Error Display */}
+              {locationError && (
+                <Card className="absolute bottom-4 right-4 glass-card border-destructive/30 animate-scale-in z-20 max-w-sm">
+                  <div className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 bg-gradient-to-br from-destructive to-destructive/80 rounded-full flex items-center justify-center mt-0.5 shadow-sm">
+                        <MapPin className="h-3 w-3 text-white" />
                       </div>
-                    </Card>
-                  )}
-                </div>
-              </Panel>
-            </PanelGroup>
+                      <div className="flex-1 space-y-2">
+                        <p className="text-sm font-medium text-destructive">Location Services Error</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{locationError}</p>
+                        <Button 
+                          size="sm" 
+                          className="modern-button mt-2 h-8 text-xs"
+                          onClick={getCurrentPosition}
+                        >
+                          <Navigation className="h-3 w-3 mr-1" />
+                          Retry Location
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              )}
+            </div>
           )}
         </div>
       </div>
+
+      {/* Video Feed Overlay */}
+      <VideoFeedOverlay 
+        isOpen={showVideoFeed}
+        onClose={() => setShowVideoFeed(false)}
+        currentLocation={currentLocation}
+        locationAddress={geocodingResult?.formatted}
+        submittedBy="Civic Reporter #1247"
+        submittedAt={new Date(Date.now() - 300000).toISOString()}
+      />
     </div>
   );
 };
