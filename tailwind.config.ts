@@ -52,7 +52,7 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				/* Ultra-Modern Civic Color Extensions */
+				/* Modern Civic Color Extensions */
 				civic: {
 					navy: 'hsl(var(--civic-navy))',
 					gold: 'hsl(var(--civic-gold))',
@@ -60,17 +60,10 @@ export default {
 					'blue-light': 'hsl(var(--civic-blue-light))',
 					gray: 'hsl(var(--civic-gray))'
 				},
-				/* Neon & Electric Colors */
-				electric: {
-					blue: 'hsl(var(--electric-blue))',
-					cyan: 'hsl(var(--electric-cyan))'
-				},
-				neon: {
-					purple: 'hsl(var(--neon-purple))',
-					pink: 'hsl(var(--neon-pink))'
-				},
-				ultra: {
-					black: 'hsl(var(--ultra-black))'
+				/* Modern Accent Colors */
+				modern: {
+					blue: 'hsl(var(--modern-blue))',
+					teal: 'hsl(var(--modern-teal))'
 				},
 				live: {
 					pulse: 'hsl(var(--live-pulse))'

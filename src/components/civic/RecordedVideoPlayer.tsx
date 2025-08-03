@@ -86,7 +86,7 @@ export const RecordedVideoPlayer: React.FC<RecordedVideoPlayerProps> = ({
   };
 
   return (
-    <Card className={`relative overflow-hidden glass-card ${className} ${isFullscreen ? 'fixed inset-0 z-50' : ''} group hover-lift-3d magnetic`}>
+    <Card className={`relative overflow-hidden glass-card hover-lift-modern ${className} ${isFullscreen ? 'fixed inset-0 z-50' : ''} group`}>
       {/* Enhanced Video Header with Submission Info */}
       <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/80 via-black/60 to-transparent p-4 sm:p-6">
         <div className="flex justify-between items-start gap-4">
