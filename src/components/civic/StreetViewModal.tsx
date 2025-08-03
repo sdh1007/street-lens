@@ -142,20 +142,43 @@ export const StreetViewModal: React.FC<StreetViewModalProps> = ({
       }
     };
 
-    // Wait for Google Maps API to be loaded
+    // Wait for Google Maps API to be loaded and DOM to be ready
     console.log('StreetView: Checking if Google Maps API is loaded:', !!(window as any).google?.maps);
     
     if ((window as any).google?.maps) {
-      console.log('StreetView: Google Maps API already loaded, initializing immediately');
-      initializeStreetView();
+      console.log('StreetView: Google Maps API already loaded, waiting for DOM...');
+      // Wait for the DOM element to be available
+      const initWithDelay = () => {
+        if (streetViewRef.current) {
+          console.log('StreetView: DOM ref available, initializing...');
+          initializeStreetView();
+        } else {
+          console.log('StreetView: DOM ref not ready, retrying...');
+          setTimeout(initWithDelay, 100);
+        }
+      };
+      
+      // Start checking for DOM readiness
+      setTimeout(initWithDelay, 50);
     } else {
       console.log('StreetView: Google Maps API not loaded, waiting...');
       const checkGoogleMaps = setInterval(() => {
         console.log('StreetView: Checking Google Maps API...');
         if ((window as any).google?.maps) {
-          console.log('StreetView: Google Maps API loaded, initializing now');
+          console.log('StreetView: Google Maps API loaded, now checking DOM...');
           clearInterval(checkGoogleMaps);
-          initializeStreetView();
+          
+          const initWithDelay = () => {
+            if (streetViewRef.current) {
+              console.log('StreetView: DOM ref available, initializing...');
+              initializeStreetView();
+            } else {
+              console.log('StreetView: DOM ref not ready, retrying...');
+              setTimeout(initWithDelay, 100);
+            }
+          };
+          
+          setTimeout(initWithDelay, 50);
         }
       }, 100);
 
