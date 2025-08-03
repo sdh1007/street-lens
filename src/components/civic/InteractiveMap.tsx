@@ -56,10 +56,30 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const [selectedColor, setSelectedColor] = useState('#ff0000');
   const [isDrawingPanelOpen, setIsDrawingPanelOpen] = useState(false);
 
-  // Enhanced color options for different drawing types
+  // Enhanced rainbow color options
+  const rainbowColors = [
+    // Reds
+    '#ff0000', '#ff1a1a', '#ff3333', '#ff4d4d',
+    // Oranges  
+    '#ff6600', '#ff8000', '#ff9933', '#ffb366',
+    // Yellows
+    '#ffcc00', '#ffdd00', '#ffee00', '#ffff00',
+    // Greens
+    '#66ff66', '#33ff33', '#00ff00', '#00cc00',
+    // Blues
+    '#0066ff', '#0080ff', '#00ccff', '#00ffff',
+    // Purples
+    '#6600ff', '#8000ff', '#9933ff', '#b366ff',
+    // Pinks
+    '#ff00ff', '#ff33cc', '#ff6699', '#ff9999',
+    // Additional colors
+    '#000000', '#333333', '#666666', '#999999',
+    '#cccccc', '#ffffff', '#8b4513', '#daa520'
+  ];
+
   const drawingColors = {
-    concern: ['#ff0000', '#ff6b35', '#f7931e', '#ffcd3c'],
-    route: ['#0066cc', '#2196f3', '#4caf50', '#9c27b0']
+    concern: rainbowColors.slice(0, 16), // First 16 colors
+    route: rainbowColors.slice(16, 32)   // Last 16 colors
   };
 
   // Heatmap category configurations
@@ -143,6 +163,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         strokeColor: selectedColor,
         clickable: true,
         editable: true,
+        draggable: true, // Make polygons draggable
         zIndex: 1
       },
       polylineOptions: {
@@ -151,6 +172,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         strokeWeight: 4,
         clickable: true,
         editable: true,
+        draggable: true, // Make polylines draggable
         zIndex: 1
       },
       markerOptions: {
@@ -162,7 +184,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           strokeColor: '#ffffff',
           strokeWeight: 3,
         },
-        draggable: true
+        draggable: true // Markers are already draggable
       }
     });
 
@@ -190,7 +212,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       
       drawnShapesRef.current.push(shapeData);
 
-      // Enhanced click listener for info window with better styling
+      // Enhanced click listener for info window with better styling and drag functionality
       const infoWindow = new (window as any).google.maps.InfoWindow();
       
       (window as any).google.maps.event.addListener(shape, 'click', (clickEvent: any) => {
@@ -208,14 +230,21 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
               <p class="text-xs text-gray-500">
                 <strong>Created:</strong> ${new Date(shapeData.timestamp).toLocaleString()}
               </p>
+              <div class="bg-blue-50 p-2 rounded text-xs text-blue-700 mb-2">
+                💡 <strong>Tip:</strong> This shape is draggable! ${type === 'polygon' || type === 'polyline' ? 'You can also edit individual points.' : ''}
+              </div>
               <div class="flex gap-2 mt-3">
+                <button onclick="window.toggleDrag('${shapeData.id}')" 
+                        class="text-xs bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition-colors">
+                  🔄 Toggle Drag
+                </button>
                 <button onclick="window.deleteShape('${shapeData.id}')" 
                         class="text-xs bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-colors">
                   🗑️ Delete
                 </button>
                 <button onclick="window.editShape('${shapeData.id}')" 
                         class="text-xs bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition-colors">
-                  ✏️ Edit
+                  ✏️ Edit Points
                 </button>
               </div>
             </div>
@@ -236,7 +265,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       drawingManager.setDrawingMode(null);
     });
     
-    // Add global functions for shape management
+    // Add enhanced global functions for shape management
     (window as any).deleteShape = (shapeId: string) => {
       const shapeIndex = drawnShapesRef.current.findIndex(s => s.id === shapeId);
       if (shapeIndex !== -1) {
@@ -247,16 +276,43 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       }
     };
     
+    (window as any).toggleDrag = (shapeId: string) => {
+      const shapeData = drawnShapesRef.current.find(s => s.id === shapeId);
+      if (shapeData && shapeData.shape) {
+        const currentDraggable = shapeData.shape.getDraggable ? shapeData.shape.getDraggable() : shapeData.shape.draggable;
+        shapeData.shape.setDraggable(!currentDraggable);
+        
+        // Visual feedback
+        if (!currentDraggable) {
+          // Enable drag mode - add visual indicator
+          shapeData.shape.setOptions({
+            strokeWeight: shapeData.shape.strokeWeight ? shapeData.shape.strokeWeight + 2 : 5,
+            strokeOpacity: 0.8
+          });
+        } else {
+          // Disable drag mode - restore original styling
+          shapeData.shape.setOptions({
+            strokeWeight: shapeData.shape.strokeWeight ? shapeData.shape.strokeWeight - 2 : 3,
+            strokeOpacity: 1.0
+          });
+        }
+      }
+    };
+
     (window as any).editShape = (shapeId: string) => {
       const shapeData = drawnShapesRef.current.find(s => s.id === shapeId);
       if (shapeData) {
-        shapeData.shape.setEditable(true);
-        // Auto-hide after 5 seconds
-        setTimeout(() => {
-          if (shapeData.shape) {
-            shapeData.shape.setEditable(false);
-          }
-        }, 5000);
+        const isEditable = shapeData.shape.getEditable ? shapeData.shape.getEditable() : false;
+        shapeData.shape.setEditable(!isEditable);
+        
+        // Auto-hide editing after 10 seconds
+        if (!isEditable) {
+          setTimeout(() => {
+            if (shapeData.shape) {
+              shapeData.shape.setEditable(false);
+            }
+          }, 10000);
+        }
       }
     };
   };
@@ -295,6 +351,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         strokeColor: selectedColor,
         clickable: true,
         editable: true,
+        draggable: true,
         zIndex: 1
       },
       polylineOptions: {
@@ -303,6 +360,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         strokeWeight: 4,
         clickable: true,
         editable: true,
+        draggable: true,
         zIndex: 1
       },
       markerOptions: {
@@ -780,21 +838,34 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
               </div>
             </div>
             
-            {/* Color Selection */}
+            {/* Enhanced Color Selection with Rainbow Options */}
             <div className="mb-4">
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Color</label>
-              <div className="grid grid-cols-4 gap-2">
-                {drawingColors[drawingType].map((color) => (
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Color Palette</label>
+              <div className="grid grid-cols-8 gap-1.5 max-h-32 overflow-y-auto">
+                {drawingColors[drawingType].map((color, index) => (
                   <button
                     key={color}
-                    className={`w-8 h-8 rounded-full border-2 transition-all hover:scale-110 ${
+                    className={`w-6 h-6 rounded-full border-2 transition-all hover:scale-110 ${
                       selectedColor === color ? 'border-gray-800 ring-2 ring-blue-500' : 'border-gray-300'
                     }`}
                     style={{ backgroundColor: color }}
                     onClick={() => setSelectedColor(color)}
-                    title={`Select ${color}`}
+                    title={`Color ${index + 1}: ${color}`}
                   />
                 ))}
+              </div>
+              
+              {/* Custom Color Input */}
+              <div className="mt-3 flex items-center gap-2">
+                <label className="text-xs text-gray-600">Custom:</label>
+                <input
+                  type="color"
+                  value={selectedColor}
+                  onChange={(e) => setSelectedColor(e.target.value)}
+                  className="w-8 h-8 rounded border border-gray-300 cursor-pointer"
+                  title="Choose custom color"
+                />
+                <span className="text-xs text-gray-500 ml-1">{selectedColor}</span>
               </div>
             </div>
             
@@ -832,11 +903,25 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
               </div>
             </div>
             
-            {/* Drawing Stats & Actions */}
+            {/* Enhanced Drawing Stats & Actions */}
             <div className="border-t pt-3">
-              <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
-                <span>Drawings: {drawnShapesRef.current.length}</span>
-                <span>History: {drawingHistory.length}</span>
+              <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 mb-3">
+                <div className="text-center">
+                  <div className="font-semibold text-lg">{drawnShapesRef.current.length}</div>
+                  <div className="text-xs">Drawings</div>
+                </div>
+                <div className="text-center">
+                  <div className="font-semibold text-lg">{drawingHistory.length}</div>
+                  <div className="text-xs">History</div>
+                </div>
+              </div>
+              
+              <div className="bg-blue-50 p-2 rounded text-xs text-blue-700 mb-3">
+                💡 <strong>Pro Tips:</strong><br/>
+                • All shapes are draggable by default<br/>
+                • Click shapes to toggle drag mode<br/>
+                • Use edit mode to adjust points<br/>
+                • Try the custom color picker!
               </div>
               
               <div className="flex gap-2">
