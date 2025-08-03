@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Detection, GPSPoint } from '@/types/civic';
-import { MapPin, Layers, Satellite, Navigation, Eye, Maximize2, Minimize2 } from 'lucide-react';
+import { MapPin, Layers, Satellite, Navigation, Eye, Maximize2, Minimize2, Edit3, Square, Route, MapPinIcon, Trash2 } from 'lucide-react';
 import { HeatmapReportsModal } from './HeatmapReportsModal';
 import { StreetViewModal } from './StreetViewModal';
 
@@ -34,6 +34,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const streetViewRef2 = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const heatmapLayers = useRef<{ [key: string]: any }>({});
+  const drawingManagerRef = useRef<any>(null);
+  const drawnShapesRef = useRef<any[]>([]);
   const [mapType, setMapType] = useState<'roadmap' | 'satellite' | 'hybrid'>('roadmap');
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [selectedDetection, setSelectedDetection] = useState<Detection | null>(null);
@@ -47,6 +49,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>('trash');
   const [showStreetViewModal, setShowStreetViewModal] = useState(false);
   const [streetViewLocation, setStreetViewLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [drawingMode, setDrawingMode] = useState<'none' | 'polygon' | 'polyline' | 'marker'>('none');
+  const [drawingType, setDrawingType] = useState<'concern' | 'route'>('concern');
 
   // Heatmap category configurations
   const heatmapCategories = {
@@ -95,6 +99,12 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       });
 
       googleMapRef.current = map;
+      
+      // Initialize Drawing Manager
+      if ((window as any).google?.maps?.drawing) {
+        initializeDrawingManager(map);
+      }
+      
       setIsMapLoaded(true);
     };
 
@@ -110,6 +120,174 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       return () => clearInterval(checkGoogleMaps);
     }
   }, [mapType]);
+
+  // Initialize Drawing Manager
+  const initializeDrawingManager = (map: any) => {
+    const drawingManager = new (window as any).google.maps.drawing.DrawingManager({
+      drawingMode: null,
+      drawingControl: false,
+      polygonOptions: {
+        fillColor: drawingType === 'concern' ? '#ff4444' : '#4444ff',
+        fillOpacity: 0.3,
+        strokeWeight: 2,
+        strokeColor: drawingType === 'concern' ? '#ff0000' : '#0000ff',
+        clickable: true,
+        editable: true,
+        zIndex: 1
+      },
+      polylineOptions: {
+        strokeColor: drawingType === 'concern' ? '#ff0000' : '#0000ff',
+        strokeOpacity: 1.0,
+        strokeWeight: 3,
+        clickable: true,
+        editable: true,
+        zIndex: 1
+      },
+      markerOptions: {
+        icon: {
+          path: (window as any).google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: drawingType === 'concern' ? '#ff0000' : '#0000ff',
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 2,
+        },
+        draggable: true
+      }
+    });
+
+    drawingManager.setMap(map);
+    drawingManagerRef.current = drawingManager;
+
+    // Handle drawing completion
+    (window as any).google.maps.event.addListener(drawingManager, 'overlaycomplete', (event: any) => {
+      const shape = event.overlay;
+      const type = event.type;
+      
+      // Store the shape
+      drawnShapesRef.current.push({
+        shape,
+        type,
+        category: drawingType,
+        timestamp: new Date().toISOString()
+      });
+
+      // Add click listener for info window
+      const infoWindow = new (window as any).google.maps.InfoWindow();
+      
+      (window as any).google.maps.event.addListener(shape, 'click', () => {
+        const content = `
+          <div class="p-3">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-lg">${drawingType === 'concern' ? '⚠️' : '🗺️'}</span>
+              <strong>${drawingType === 'concern' ? 'Area of Concern' : 'Planned Route'}</strong>
+            </div>
+            <p class="text-sm text-gray-600 mb-2">
+              ${type === 'polygon' ? 'Marked area' : type === 'polyline' ? 'Route path' : 'Point marker'}
+            </p>
+            <button onclick="this.parentElement.parentElement.parentElement.removeShape()" 
+                    class="text-xs bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">
+              Delete
+            </button>
+          </div>
+        `;
+        
+        infoWindow.setContent(content);
+        if (type === 'marker') {
+          infoWindow.open(map, shape);
+        } else {
+          infoWindow.setPosition(event.latLng || shape.getPath().getAt(0));
+          infoWindow.open(map);
+        }
+      });
+
+      // Reset drawing mode after completion
+      setDrawingMode('none');
+      drawingManager.setDrawingMode(null);
+    });
+  };
+
+  // Drawing control functions
+  const toggleDrawingMode = (mode: 'polygon' | 'polyline' | 'marker') => {
+    if (!drawingManagerRef.current) return;
+    
+    if (drawingMode === mode) {
+      // Turn off drawing
+      setDrawingMode('none');
+      drawingManagerRef.current.setDrawingMode(null);
+    } else {
+      // Turn on drawing
+      setDrawingMode(mode);
+      const drawingModeMap = {
+        polygon: (window as any).google.maps.drawing.OverlayType.POLYGON,
+        polyline: (window as any).google.maps.drawing.OverlayType.POLYLINE,
+        marker: (window as any).google.maps.drawing.OverlayType.MARKER
+      };
+      drawingManagerRef.current.setDrawingMode(drawingModeMap[mode]);
+      
+      // Update drawing options based on current type
+      updateDrawingOptions();
+    }
+  };
+
+  const updateDrawingOptions = () => {
+    if (!drawingManagerRef.current) return;
+    
+    const color = drawingType === 'concern' ? '#ff0000' : '#0000ff';
+    const fillColor = drawingType === 'concern' ? '#ff4444' : '#4444ff';
+    
+    drawingManagerRef.current.setOptions({
+      polygonOptions: {
+        fillColor: fillColor,
+        fillOpacity: 0.3,
+        strokeWeight: 2,
+        strokeColor: color,
+        clickable: true,
+        editable: true,
+        zIndex: 1
+      },
+      polylineOptions: {
+        strokeColor: color,
+        strokeOpacity: 1.0,
+        strokeWeight: 3,
+        clickable: true,
+        editable: true,
+        zIndex: 1
+      },
+      markerOptions: {
+        icon: {
+          path: (window as any).google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: color,
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 2,
+        },
+        draggable: true
+      }
+    });
+  };
+
+  const clearAllDrawings = () => {
+    drawnShapesRef.current.forEach(({ shape }) => {
+      shape.setMap(null);
+    });
+    drawnShapesRef.current = [];
+    setDrawingMode('none');
+    if (drawingManagerRef.current) {
+      drawingManagerRef.current.setDrawingMode(null);
+    }
+  };
+
+  const toggleDrawingType = () => {
+    setDrawingType(prev => prev === 'concern' ? 'route' : 'concern');
+    updateDrawingOptions();
+  };
+
+  // Update drawing options when type changes
+  useEffect(() => {
+    updateDrawingOptions();
+  }, [drawingType]);
 
   // Generate individual reports for clicking
   const generateIndividualReport = (lat: number, lng: number, category: string): Detection => {
@@ -338,8 +516,65 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             <p className="text-sm text-civic-gold-light font-medium">Real-time detection tracking</p>
           </div>
           
-          {/* Enhanced Map Controls */}
-          <div className="flex flex-wrap gap-1">
+            {/* Enhanced Map Controls */}
+            <div className="flex flex-wrap gap-1">
+            {/* Drawing Tools */}
+            <div className="flex gap-1 border-r border-white/20 pr-1 mr-1">
+              <Button
+                size="sm"
+                variant={drawingType === 'concern' ? 'secondary' : 'ghost'}
+                onClick={toggleDrawingType}
+                className="text-white hover:bg-white/20 h-8 px-2 hover-lift focus-ring"
+                title={`Switch to ${drawingType === 'concern' ? 'Route Planning' : 'Area Marking'}`}
+              >
+                <span className="text-sm mr-1">{drawingType === 'concern' ? '⚠️' : '🗺️'}</span>
+                <span className="hidden sm:inline text-xs">
+                  {drawingType === 'concern' ? 'Concern' : 'Route'}
+                </span>
+              </Button>
+              
+              <Button
+                size="sm"
+                variant={drawingMode === 'polygon' ? 'secondary' : 'ghost'}
+                onClick={() => toggleDrawingMode('polygon')}
+                className="text-white hover:bg-white/20 h-8 w-8 p-0 hover-lift focus-ring"
+                title="Draw Area"
+              >
+                <Square className="h-3 w-3" />
+              </Button>
+              
+              <Button
+                size="sm"
+                variant={drawingMode === 'polyline' ? 'secondary' : 'ghost'}
+                onClick={() => toggleDrawingMode('polyline')}
+                className="text-white hover:bg-white/20 h-8 w-8 p-0 hover-lift focus-ring"
+                title="Draw Route"
+              >
+                <Route className="h-3 w-3" />
+              </Button>
+              
+              <Button
+                size="sm"
+                variant={drawingMode === 'marker' ? 'secondary' : 'ghost'}
+                onClick={() => toggleDrawingMode('marker')}
+                className="text-white hover:bg-white/20 h-8 w-8 p-0 hover-lift focus-ring"
+                title="Place Marker"
+              >
+                <MapPinIcon className="h-3 w-3" />
+              </Button>
+              
+              {drawnShapesRef.current.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={clearAllDrawings}
+                  className="text-white hover:bg-red-500/20 h-8 w-8 p-0 hover-lift focus-ring"
+                  title="Clear All Drawings"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
             <Button
               size="sm"
               variant={viewMode === 'heatmap' ? 'secondary' : 'ghost'}
@@ -432,6 +667,26 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           </div>
         )}
         
+        {/* Drawing Mode Indicator */}
+        {drawingMode !== 'none' && (
+          <div className="absolute top-4 right-4 glass bg-blue-600/95 backdrop-blur-sm p-3 rounded-xl shadow-lg z-20 animate-slide-in-left">
+            <div className="flex items-center gap-2 text-white">
+              <Edit3 className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                Drawing {drawingMode === 'polygon' ? 'Area' : drawingMode === 'polyline' ? 'Route' : 'Marker'}
+              </span>
+              <span className="text-xs bg-white/20 px-2 py-1 rounded">
+                {drawingType === 'concern' ? 'Concern' : 'Route'}
+              </span>
+            </div>
+            <p className="text-xs text-blue-100 mt-1">
+              {drawingMode === 'polygon' ? 'Click to create area boundary' : 
+               drawingMode === 'polyline' ? 'Click to create route path' : 
+               'Click to place marker'}
+            </p>
+          </div>
+        )}
+
         {/* Enhanced Heatmap Controls */}
         {viewMode === 'heatmap' && (
           <div className="absolute top-4 left-4 glass bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-lg z-10 max-w-xs animate-slide-in-right">
