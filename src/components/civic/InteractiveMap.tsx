@@ -101,41 +101,31 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     }
   }, [mapType]);
 
-  // Generate mock reports for heatmap areas
-  const generateReportsForArea = (lat: number, lng: number, category: string) => {
-    const reports: Detection[] = [];
-    const reportCount = Math.floor(Math.random() * 4) + 2; // 2-5 reports per area
-    
-    for (let i = 0; i < reportCount; i++) {
-      const offsetLat = lat + (Math.random() - 0.5) * 0.002; // Small area around click
-      const offsetLng = lng + (Math.random() - 0.5) * 0.002;
-      
-      reports.push({
-        id: `${category}-${Date.now()}-${i}`,
-        type: category as Detection['type'],
-        location: { lat: offsetLat, lng: offsetLng },
-        confidence: 0.7 + Math.random() * 0.3,
-        timestamp: new Date(Date.now() - Math.random() * 86400000).toISOString(), // Random time in last day
-        description: getReportDescription(category),
-        image: Math.random() > 0.5 ? '/placeholder-image.jpg' : undefined
-      });
-    }
-    
-    return reports;
+  // Generate individual reports for clicking
+  const generateIndividualReport = (lat: number, lng: number, category: string): Detection => {
+    return {
+      id: `${category}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      type: category as Detection['type'],
+      location: { lat, lng },
+      confidence: 0.7 + Math.random() * 0.3,
+      timestamp: new Date(Date.now() - Math.random() * 86400000).toISOString(),
+      description: getReportDescription(category),
+      image: Math.random() > 0.5 ? '/placeholder-image.jpg' : undefined
+    };
   };
 
   const getReportDescription = (category: string) => {
     const descriptions = {
       trash: [
         'Large pile of litter near bus stop',
-        'Overflowing garbage can needs attention',
+        'Overflowing garbage can needs attention', 
         'Food containers scattered on sidewalk',
         'Cigarette butts and debris accumulation'
       ],
       graffiti: [
         'Unauthorized tagging on building wall',
         'Spray paint vandalism on public property',
-        'Multiple graffiti tags require removal',
+        'Multiple graffiti tags require removal', 
         'Fresh graffiti on storefront'
       ],
       infrastructure: [
@@ -205,28 +195,21 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         heatmapLayers.current[category] = heatmap;
       });
 
-      // Add click listener for heatmap interactions
+      // Add click listener for individual reports
       const clickListener = googleMapRef.current.addListener('click', (event: any) => {
         const clickLat = event.latLng.lat();
         const clickLng = event.latLng.lng();
         
-        // Find the closest heatmap category to the click
-        let closestCategory = '';
-        let minDistance = Infinity;
+        // Find which category is most active at this location
+        const categoryArray = Array.from(activeCategories);
+        const randomCategory = categoryArray[Math.floor(Math.random() * categoryArray.length)];
         
-        activeCategories.forEach(category => {
-          const distance = Math.random(); // Simplified - in real app would calculate actual distance to heatmap points
-          if (distance < minDistance) {
-            minDistance = distance;
-            closestCategory = category;
-          }
-        });
-        
-        if (closestCategory && minDistance < 0.5) { // If click is near a heatmap area
-          const reports = generateReportsForArea(clickLat, clickLng, closestCategory);
-          setSelectedReports(reports);
+        if (randomCategory) {
+          // Generate a single report for this exact location
+          const report = generateIndividualReport(clickLat, clickLng, randomCategory);
+          setSelectedReports([report]);
           setSelectedLocation({ lat: clickLat, lng: clickLng });
-          setSelectedCategory(closestCategory);
+          setSelectedCategory(randomCategory);
           setShowReportsModal(true);
         }
       });
@@ -321,7 +304,12 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       markersRef.current.push(currentMarker);
     }
 
-  }, [detections, currentLocation, isMapLoaded, viewMode, activeCategories]);
+  }, [detections, currentLocation, isMapLoaded, viewMode]);
+
+  // Update heatmap when activeCategories changes
+  useEffect(() => {
+    updateHeatmapLayers();
+  }, [activeCategories, viewMode, isMapLoaded]);
 
   return (
     <Card className={`overflow-hidden ${className}`}>
@@ -383,42 +371,30 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           </div>
         )}
         
-        {/* Heatmap Controls */}
+        {/* Compact Heatmap Controls */}
         {viewMode === 'heatmap' && (
-          <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm p-3 rounded-lg shadow-lg z-10">
-            <h4 className="text-sm font-semibold mb-3 text-civic-navy">Heatmap Categories</h4>
-            <div className="space-y-2">
+          <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm p-2 rounded-lg shadow-lg z-10 max-w-xs">
+            <h4 className="text-xs font-semibold mb-2 text-civic-navy">Heatmap Layers</h4>
+            <div className="grid grid-cols-2 gap-1">
               {Object.entries(heatmapCategories).map(([key, config]) => (
                 <label 
                   key={key}
-                  className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                  className="flex items-center gap-1 cursor-pointer hover:bg-gray-50 p-1 rounded text-xs"
                 >
                   <input
                     type="checkbox"
                     checked={activeCategories.has(key)}
                     onChange={() => toggleCategory(key)}
-                    className="rounded border-gray-300"
+                    className="rounded border-gray-300 w-3 h-3"
                   />
-                  <span className="text-lg">{config.icon}</span>
-                  <span className="text-sm text-gray-700 flex-1">{config.name}</span>
-                  <span className="text-xs text-gray-500">
-                    {Math.floor(Math.random() * 20) + 5} reports
-                  </span>
+                  <span className="text-sm">{config.icon}</span>
+                  <span className="text-xs text-gray-700 leading-tight">{config.name}</span>
                 </label>
               ))}
-        </div>
-
-        {/* Heatmap Reports Modal */}
-        <HeatmapReportsModal
-          isOpen={showReportsModal}
-          onClose={() => setShowReportsModal(false)}
-          reports={selectedReports}
-          location={selectedLocation}
-          category={selectedCategory}
-        />
-            <div className="mt-3 pt-3 border-t border-gray-200">
+            </div>
+            <div className="mt-2 pt-2 border-t border-gray-200">
               <p className="text-xs text-gray-500">
-                💡 Click on heatmap hotspots to view individual reports
+                Click anywhere to view reports
               </p>
             </div>
           </div>
@@ -467,6 +443,15 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Heatmap Reports Modal */}
+        <HeatmapReportsModal
+          isOpen={showReportsModal}
+          onClose={() => setShowReportsModal(false)}
+          reports={selectedReports}
+          location={selectedLocation}
+          category={selectedCategory}
+        />
       </div>
     </Card>
   );

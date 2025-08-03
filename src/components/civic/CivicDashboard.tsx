@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { DashboardHeader } from './DashboardHeader';
 import { RecordedVideoPlayer } from './RecordedVideoPlayer';
 import { InteractiveMap } from './InteractiveMap';
@@ -8,7 +9,7 @@ import { LiveStream, Detection, GPSPoint, StreamStats } from '@/types/civic';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useGeocoding } from '@/hooks/useGeocoding';
 import { Button } from '@/components/ui/button';
-import { MapPin, Navigation } from 'lucide-react';
+import { MapPin, Navigation, GripVertical } from 'lucide-react';
 
 export const CivicDashboard: React.FC = () => {
   // Real geolocation hook
@@ -101,54 +102,66 @@ export const CivicDashboard: React.FC = () => {
         />
       </div>
 
-      {/* Main Content - 80% */}
-      <div className="h-[70vh] p-4 grid grid-cols-1 lg:grid-cols-5 gap-4">
-        {/* Recorded Video Player - 60% */}
-        <div className="lg:col-span-3">
-          <RecordedVideoPlayer
-            currentLocation={currentLocation}
-            locationAddress={geocodingResult?.formatted}
-            submittedBy="Civic Reporter #1247"
-            submittedAt={new Date(Date.now() - 300000).toISOString()} // 5 minutes ago
-            className="h-full"
-          />
-        </div>
-
-        {/* Map - 40% */}
-        <div className="lg:col-span-2 space-y-2">
-          {/* Location Controls */}
-          <div className="flex gap-2 justify-end">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={getCurrentPosition}
-              disabled={locationLoading}
-              className="flex items-center gap-2"
-            >
-              {locationLoading ? (
-                <div className="w-3 h-3 border border-gray-300 border-t-civic-navy rounded-full animate-spin" />
-              ) : (
-                <Navigation className="h-3 w-3" />
-              )}
-              {locationLoading ? 'Getting Location...' : 'Update Location'}
-            </Button>
-          </div>
+      {/* Resizable Main Content - 80% */}
+      <div className="h-[70vh] p-4">
+        <PanelGroup direction="horizontal" className="h-full">
+          {/* Video Player Panel */}
+          <Panel defaultSize={60} minSize={30}>
+            <RecordedVideoPlayer
+              currentLocation={currentLocation}
+              locationAddress={geocodingResult?.formatted}
+              submittedBy="Civic Reporter #1247"
+              submittedAt={new Date(Date.now() - 300000).toISOString()} // 5 minutes ago
+              className="h-full"
+            />
+          </Panel>
           
-          <InteractiveMap
-            detections={mockDetections}
-            gpsTrail={gpsTrail}
-            currentLocation={currentLocation}
-            className="h-full"
-          />
-          
-          {/* Location Error Display */}
-          {locationError && (
-            <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
-              <p className="text-sm text-destructive font-medium">Location Error</p>
-              <p className="text-xs text-destructive/70">{locationError}</p>
+          {/* Resize Handle */}
+          <PanelResizeHandle className="w-2 bg-gray-200 hover:bg-gray-300 transition-colors relative group">
+            <div className="absolute inset-y-0 left-1/2 transform -translate-x-1/2 w-1 bg-gray-400 group-hover:bg-gray-600 transition-colors"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-500 group-hover:text-gray-700">
+              <GripVertical className="h-4 w-4" />
             </div>
-          )}
-        </div>
+          </PanelResizeHandle>
+          
+          {/* Map Panel */}
+          <Panel defaultSize={40} minSize={25}>
+            <div className="h-full space-y-2">
+              {/* Location Controls */}
+              <div className="flex gap-2 justify-end">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={getCurrentPosition}
+                  disabled={locationLoading}
+                  className="flex items-center gap-2"
+                >
+                  {locationLoading ? (
+                    <div className="w-3 h-3 border border-gray-300 border-t-civic-navy rounded-full animate-spin" />
+                  ) : (
+                    <Navigation className="h-3 w-3" />
+                  )}
+                  {locationLoading ? 'Getting Location...' : 'Update Location'}
+                </Button>
+              </div>
+              
+              <InteractiveMap
+                detections={mockDetections}
+                gpsTrail={gpsTrail}
+                currentLocation={currentLocation}
+                className="h-full"
+              />
+              
+              {/* Location Error Display */}
+              {locationError && (
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
+                  <p className="text-sm text-destructive font-medium">Location Error</p>
+                  <p className="text-xs text-destructive/70">{locationError}</p>
+                </div>
+              )}
+            </div>
+          </Panel>
+        </PanelGroup>
       </div>
 
       {/* Bottom Section - 20% */}

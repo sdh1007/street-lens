@@ -107,15 +107,18 @@ export const HeatmapReportsModal: React.FC<HeatmapReportsModalProps> = ({
             <div className="flex items-center gap-2">
               <Target className="h-5 w-5 text-civic-navy" />
               <span className="font-semibold text-civic-navy">
-                {reports.length} {reports.length === 1 ? 'Report' : 'Reports'} Found
+                {reports.length === 1 ? 'Individual Report' : `${reports.length} Reports in Area`}
               </span>
             </div>
             <Badge variant="outline" className="bg-white">
-              Heatmap Area Analysis
+              {reports.length === 1 ? 'Single Report' : 'Area Analysis'}
             </Badge>
           </div>
           <p className="text-sm text-gray-600 mt-2">
-            Click on any report below to view full details and recorded footage.
+            {reports.length === 1 
+              ? 'Detailed view of the selected civic issue report.'
+              : 'Click on any report below to view full details and recorded footage.'
+            }
           </p>
         </div>
 
