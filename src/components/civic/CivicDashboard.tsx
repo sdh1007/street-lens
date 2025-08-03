@@ -28,6 +28,9 @@ export const CivicDashboard: React.FC = () => {
 
   // State for toggling between current and past cases
   const [showPastCases, setShowPastCases] = useState(false);
+  
+  // Map fullscreen state
+  const [isMapFullscreen, setIsMapFullscreen] = useState(false);
 
   // Real SF 311 data
   const { detections: sfDetections, isLoading: isSFDataLoading, error: sfDataError } = useSFCivicData({ showPastCases });
@@ -79,6 +82,23 @@ export const CivicDashboard: React.FC = () => {
     }
   }, [currentLocation, geocodeLocation]);
 
+  // Handle ESC key to exit fullscreen
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isMapFullscreen) {
+        setIsMapFullscreen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isMapFullscreen]);
+
+  // Handle fullscreen toggle
+  const handleToggleFullscreen = (fullscreen: boolean) => {
+    setIsMapFullscreen(fullscreen);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
       {/* Modern Professional Header */}
@@ -128,72 +148,116 @@ export const CivicDashboard: React.FC = () => {
       {/* Modern Main Content Area */}
       <div className="px-4 sm:px-6 pb-6">
         <div className="h-[75vh] min-h-[600px]">
-          <PanelGroup direction="horizontal" className="h-full rounded-xl overflow-hidden shadow-xl modern-glow">
-            {/* Video Player Panel */}
-            <Panel defaultSize={50} minSize={35} className="relative">
-              <div className="h-full animate-fade-in video-modern">
-                <RecordedVideoPlayer
-                  currentLocation={currentLocation}
-                  locationAddress={geocodingResult?.formatted}
-                  submittedBy="Civic Reporter #1247"
-                  submittedAt={new Date(Date.now() - 300000).toISOString()}
-                  className="h-full rounded-none border-none shadow-none"
-                />
-              </div>
-            </Panel>
-            
-            {/* Modern Resize Handle */}
-            <PanelResizeHandle className="w-1 bg-gradient-to-b from-civic-navy via-civic-blue-light to-civic-navy hover:w-2 transition-all duration-300 relative group modern-glow">
-              <div className="absolute inset-y-0 left-1/2 transform -translate-x-1/2 w-0.5 bg-gradient-to-b from-transparent via-white to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                <div className="w-6 h-6 bg-gradient-to-br from-civic-navy to-civic-blue-light rounded-full flex items-center justify-center shadow-lg">
-                  <GripVertical className="h-3 w-3 text-white" />
-                </div>
-              </div>
-            </PanelResizeHandle>
-            
-            {/* Map Panel */}
-            <Panel defaultSize={50} minSize={25} className="relative">
-              <div className="h-full p-3 bg-gradient-to-br from-muted/20 to-background animate-slide-in-right">
-                {/* Map Container */}
-                <div className="h-full rounded-xl overflow-hidden shadow-xl hover-lift-modern">
-            <InteractiveMap 
-              detections={sfDetections}
-              gpsTrail={gpsTrail}
-              currentLocation={currentLocation}
-              className="h-full"
-              showPastCases={showPastCases}
-              onTogglePastCases={setShowPastCases}
-            />
-                </div>
-                
-                {/* Modern Location Error Display */}
-                {locationError && (
-                  <Card className="absolute bottom-4 left-4 right-4 glass-card border-destructive/30 animate-scale-in">
-                    <div className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-6 h-6 bg-gradient-to-br from-destructive to-destructive/80 rounded-full flex items-center justify-center mt-0.5 shadow-sm">
-                          <MapPin className="h-3 w-3 text-white" />
-                        </div>
-                        <div className="flex-1 space-y-2">
-                          <p className="text-sm font-medium text-destructive">Location Services Error</p>
-                          <p className="text-xs text-muted-foreground leading-relaxed">{locationError}</p>
-                          <Button 
-                            size="sm" 
-                            className="modern-button mt-2 h-8 text-xs"
-                            onClick={getCurrentPosition}
-                          >
-                            <Navigation className="h-3 w-3 mr-1" />
-                            Retry Location
-                          </Button>
-                        </div>
+          {isMapFullscreen ? (
+            // Fullscreen Map Layout
+            <div className="h-full rounded-xl overflow-hidden shadow-xl modern-glow animate-fade-in">
+              <InteractiveMap 
+                detections={sfDetections}
+                gpsTrail={gpsTrail}
+                currentLocation={currentLocation}
+                className="h-full"
+                showPastCases={showPastCases}
+                onTogglePastCases={setShowPastCases}
+                isMapFullscreen={isMapFullscreen}
+                onToggleFullscreen={handleToggleFullscreen}
+              />
+              
+              {/* Modern Location Error Display for Fullscreen */}
+              {locationError && (
+                <Card className="absolute bottom-4 left-4 right-4 glass-card border-destructive/30 animate-scale-in z-20">
+                  <div className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 bg-gradient-to-br from-destructive to-destructive/80 rounded-full flex items-center justify-center mt-0.5 shadow-sm">
+                        <MapPin className="h-3 w-3 text-white" />
+                      </div>
+                      <div className="flex-1 space-y-2">
+                        <p className="text-sm font-medium text-destructive">Location Services Error</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{locationError}</p>
+                        <Button 
+                          size="sm" 
+                          className="modern-button mt-2 h-8 text-xs"
+                          onClick={getCurrentPosition}
+                        >
+                          <Navigation className="h-3 w-3 mr-1" />
+                          Retry Location
+                        </Button>
                       </div>
                     </div>
-                  </Card>
-                )}
-              </div>
-            </Panel>
-          </PanelGroup>
+                  </div>
+                </Card>
+              )}
+            </div>
+          ) : (
+            // Normal Two-Panel Layout
+            <PanelGroup direction="horizontal" className="h-full rounded-xl overflow-hidden shadow-xl modern-glow">
+              {/* Video Player Panel */}
+              <Panel defaultSize={50} minSize={35} className="relative">
+                <div className="h-full animate-fade-in video-modern">
+                  <RecordedVideoPlayer
+                    currentLocation={currentLocation}
+                    locationAddress={geocodingResult?.formatted}
+                    submittedBy="Civic Reporter #1247"
+                    submittedAt={new Date(Date.now() - 300000).toISOString()}
+                    className="h-full rounded-none border-none shadow-none"
+                  />
+                </div>
+              </Panel>
+              
+              {/* Modern Resize Handle */}
+              <PanelResizeHandle className="w-1 bg-gradient-to-b from-civic-navy via-civic-blue-light to-civic-navy hover:w-2 transition-all duration-300 relative group modern-glow">
+                <div className="absolute inset-y-0 left-1/2 transform -translate-x-1/2 w-0.5 bg-gradient-to-b from-transparent via-white to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <div className="w-6 h-6 bg-gradient-to-br from-civic-navy to-civic-blue-light rounded-full flex items-center justify-center shadow-lg">
+                    <GripVertical className="h-3 w-3 text-white" />
+                  </div>
+                </div>
+              </PanelResizeHandle>
+              
+              {/* Map Panel */}
+              <Panel defaultSize={50} minSize={25} className="relative">
+                <div className="h-full p-3 bg-gradient-to-br from-muted/20 to-background animate-slide-in-right">
+                  {/* Map Container */}
+                  <div className="h-full rounded-xl overflow-hidden shadow-xl hover-lift-modern">
+                    <InteractiveMap 
+                      detections={sfDetections}
+                      gpsTrail={gpsTrail}
+                      currentLocation={currentLocation}
+                      className="h-full"
+                      showPastCases={showPastCases}
+                      onTogglePastCases={setShowPastCases}
+                      isMapFullscreen={isMapFullscreen}
+                      onToggleFullscreen={handleToggleFullscreen}
+                    />
+                  </div>
+                  
+                  {/* Modern Location Error Display */}
+                  {locationError && (
+                    <Card className="absolute bottom-4 left-4 right-4 glass-card border-destructive/30 animate-scale-in">
+                      <div className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="w-6 h-6 bg-gradient-to-br from-destructive to-destructive/80 rounded-full flex items-center justify-center mt-0.5 shadow-sm">
+                            <MapPin className="h-3 w-3 text-white" />
+                          </div>
+                          <div className="flex-1 space-y-2">
+                            <p className="text-sm font-medium text-destructive">Location Services Error</p>
+                            <p className="text-xs text-muted-foreground leading-relaxed">{locationError}</p>
+                            <Button 
+                              size="sm" 
+                              className="modern-button mt-2 h-8 text-xs"
+                              onClick={getCurrentPosition}
+                            >
+                              <Navigation className="h-3 w-3 mr-1" />
+                              Retry Location
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  )}
+                </div>
+              </Panel>
+            </PanelGroup>
+          )}
         </div>
       </div>
     </div>

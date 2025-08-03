@@ -14,6 +14,8 @@ interface InteractiveMapProps {
   className?: string;
   showPastCases?: boolean;
   onTogglePastCases?: (showPast: boolean) => void;
+  isMapFullscreen?: boolean;
+  onToggleFullscreen?: (fullscreen: boolean) => void;
 }
 
 export const InteractiveMap: React.FC<InteractiveMapProps> = ({
@@ -22,7 +24,9 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   currentLocation,
   className = "",
   showPastCases = false,
-  onTogglePastCases
+  onTogglePastCases,
+  isMapFullscreen = false,
+  onToggleFullscreen
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const streetViewRef = useRef<HTMLDivElement>(null);
@@ -43,7 +47,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>('trash');
   const [showStreetViewModal, setShowStreetViewModal] = useState(false);
   const [streetViewLocation, setStreetViewLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [isMapFullscreen, setIsMapFullscreen] = useState(false);
 
   // Heatmap category configurations
   const heatmapCategories = {
@@ -326,7 +329,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   }, [activeCategories, viewMode, isMapLoaded]);
 
   return (
-    <Card className={`overflow-hidden shadow-xl ${className} ${isMapFullscreen ? 'fixed inset-0 z-50' : ''}`}>
+    <Card className={`overflow-hidden shadow-xl ${className} transition-all duration-300 ease-in-out`}>
       {/* Enhanced Header */}
       <div className="p-4 sm:p-6 border-b bg-gradient-to-r from-civic-navy via-civic-blue-light to-civic-navy text-white">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
@@ -370,7 +373,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => setIsMapFullscreen(!isMapFullscreen)}
+                onClick={() => onToggleFullscreen?.(!isMapFullscreen)}
                 className="text-white hover:bg-white/20 h-8 w-8 p-0 hover-lift focus-ring"
                 title={isMapFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
               >
@@ -412,7 +415,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       </div>
       
       {/* Enhanced Map Container */}
-      <div className={`relative ${isMapFullscreen ? 'h-screen' : 'h-[500px]'} animate-fade-in`}>
+      <div className="relative h-[500px] animate-fade-in">
         <div ref={mapRef} className="w-full h-full" />
         
         {/* Enhanced Loading State */}
