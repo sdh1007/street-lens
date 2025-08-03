@@ -1,181 +1,95 @@
 import React, { useState, useEffect } from 'react';
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
-import { DashboardHeader } from './DashboardHeader';
-import { RecordedVideoPlayer } from './RecordedVideoPlayer';
+import { Card } from '@/components/ui/card';
 import { InteractiveMap } from './InteractiveMap';
-import { LiveDetectionFeed } from './LiveDetectionFeed';
-import { LiveStatsPanel } from './LiveStatsPanel';
-import { LiveStream, Detection, GPSPoint, StreamStats } from '@/types/civic';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useGeocoding } from '@/hooks/useGeocoding';
-import { Button } from '@/components/ui/button';
-import { MapPin, Navigation, GripVertical } from 'lucide-react';
+import { Detection, GPSPoint } from '@/types/civic';
 
 export const CivicDashboard: React.FC = () => {
-  // Real geolocation hook
-  const { 
-    location: currentLocation, 
-    error: locationError, 
-    isLoading: locationLoading,
-    getCurrentPosition 
-  } = useGeolocation({ 
-    enableHighAccuracy: true,
-    watch: true // Continuously track location
-  });
+  const { location, getCurrentPosition } = useGeolocation({ enableHighAccuracy: true });
+  const { result: geocodingResult, geocodeLocation } = useGeocoding();
 
-  // Real geocoding hook
-  const { result: geocodingResult, geocodeLocation, getShortAddress } = useGeocoding();
-
-  // Mock data for demo
-  const [mockDetections, setMockDetections] = useState<Detection[]>([
+  // Mock data for detections
+  const [mockDetections] = useState<Detection[]>([
     {
       id: '1',
       type: 'trash',
       location: { lat: 37.7749, lng: -122.4194 },
-      confidence: 0.87,
-      timestamp: new Date().toISOString(),
-      description: 'Litter pile detected near bus stop'
+      confidence: 0.89,
+      timestamp: new Date(Date.now() - 5000).toISOString(),
+      description: 'Overflowing trash bin detected',
+      image: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=400'
     },
     {
-      id: '2', 
+      id: '2',
       type: 'graffiti',
       location: { lat: 37.7849, lng: -122.4094 },
-      confidence: 0.93,
-      timestamp: new Date(Date.now() - 300000).toISOString(),
-      description: 'Unauthorized tagging on building wall'
+      confidence: 0.94,
+      timestamp: new Date(Date.now() - 15000).toISOString(),
+      description: 'Graffiti on building wall',
+      image: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400'
     },
     {
       id: '3',
       type: 'infrastructure',
       location: { lat: 37.7649, lng: -122.4294 },
       confidence: 0.76,
-      timestamp: new Date(Date.now() - 600000).toISOString(),
-      description: 'Damaged sidewalk requiring repair'
+      timestamp: new Date(Date.now() - 45000).toISOString(),
+      description: 'Pothole in street surface'
+    },
+    {
+      id: '4',
+      type: 'trash',
+      location: { lat: 37.7549, lng: -122.4394 },
+      confidence: 0.82,
+      timestamp: new Date(Date.now() - 120000).toISOString(),
+      description: 'Litter scattered on sidewalk'
     }
   ]);
 
-  const [mockStats, setMockStats] = useState<StreamStats>({
-    totalDetections: 23,
-    detectionsPerMinute: 2.1,
-    topIssueType: 'trash',
-    streamDuration: '02:34:12',
-    currentLocation: 'Requesting location...'
-  });
+  // GPS trail mock data
+  const [gpsTrail] = useState<GPSPoint[]>([
+    { lat: 37.7749, lng: -122.4194, timestamp: new Date(Date.now() - 300000).toISOString() },
+    { lat: 37.7759, lng: -122.4184, timestamp: new Date(Date.now() - 240000).toISOString() },
+    { lat: 37.7769, lng: -122.4174, timestamp: new Date(Date.now() - 180000).toISOString() },
+    { lat: 37.7779, lng: -122.4164, timestamp: new Date(Date.now() - 120000).toISOString() },
+    { lat: 37.7789, lng: -122.4154, timestamp: new Date(Date.now() - 60000).toISOString() },
+  ]);
 
-  // Create GPS trail from current location
-  const [gpsTrail, setGpsTrail] = useState<GPSPoint[]>([]);
-
-  // Update GPS trail when location changes
+  // Update GPS trail and current location
   useEffect(() => {
-    if (currentLocation) {
-      const newPoint: GPSPoint = {
-        lat: currentLocation.lat,
-        lng: currentLocation.lng,
-        timestamp: new Date().toISOString()
-      };
-      
-      setGpsTrail(prev => [...prev, newPoint].slice(-20)); // Keep last 20 points
-      
-      // Geocode the current location
-      geocodeLocation(currentLocation.lat, currentLocation.lng);
+    if (location) {
+      // In a real app, this would update the GPS trail with actual location data
+      console.log('Current location:', location);
+      geocodeLocation(location.lat, location.lng);
     }
-  }, [currentLocation, geocodeLocation]);
-
-  // Update stats when geocoding completes
-  useEffect(() => {
-    if (geocodingResult) {
-      setMockStats(prev => ({
-        ...prev,
-        currentLocation: getShortAddress(geocodingResult.formatted)
-      }));
-    }
-  }, [geocodingResult, getShortAddress]);
+  }, [location, geocodeLocation]);
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header - 10% */}
-      <div className="h-[10vh] p-4">
-        <DashboardHeader
-          streamStatus="connected"
-          viewerCount={1247}
-          participantCount={3}
-        />
-      </div>
-
-      {/* Resizable Main Content - 80% */}
-      <div className="h-[70vh] p-4">
-        <PanelGroup direction="horizontal" className="h-full">
-          {/* Video Player Panel */}
-          <Panel defaultSize={60} minSize={30}>
-            <RecordedVideoPlayer
-              currentLocation={currentLocation}
-              locationAddress={geocodingResult?.formatted}
-              submittedBy="Civic Reporter #1247"
-              submittedAt={new Date(Date.now() - 300000).toISOString()} // 5 minutes ago
-              className="h-full"
-            />
-          </Panel>
-          
-          {/* Resize Handle */}
-          <PanelResizeHandle className="w-2 bg-gray-200 hover:bg-gray-300 transition-colors relative group">
-            <div className="absolute inset-y-0 left-1/2 transform -translate-x-1/2 w-1 bg-gray-400 group-hover:bg-gray-600 transition-colors"></div>
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-500 group-hover:text-gray-700">
-              <GripVertical className="h-4 w-4" />
-            </div>
-          </PanelResizeHandle>
-          
-          {/* Map Panel */}
-          <Panel defaultSize={40} minSize={25}>
-            <div className="h-full space-y-2">
-              {/* Location Controls */}
-              <div className="flex gap-2 justify-end">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={getCurrentPosition}
-                  disabled={locationLoading}
-                  className="flex items-center gap-2"
-                >
-                  {locationLoading ? (
-                    <div className="w-3 h-3 border border-gray-300 border-t-civic-navy rounded-full animate-spin" />
-                  ) : (
-                    <Navigation className="h-3 w-3" />
-                  )}
-                  {locationLoading ? 'Getting Location...' : 'Update Location'}
-                </Button>
+      {/* Header */}
+      <div className="border-b bg-card">
+        <div className="container mx-auto px-6 py-4">
+          <Card className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-civic-navy">Civic Report Dashboard</h1>
+                <p className="text-muted-foreground mt-1">Monitor and analyze civic issues in your area</p>
               </div>
-              
-              <InteractiveMap
-                detections={mockDetections}
-                gpsTrail={gpsTrail}
-                currentLocation={currentLocation}
-                className="h-full"
-              />
-              
-              {/* Location Error Display */}
-              {locationError && (
-                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
-                  <p className="text-sm text-destructive font-medium">Location Error</p>
-                  <p className="text-xs text-destructive/70">{locationError}</p>
-                </div>
-              )}
             </div>
-          </Panel>
-        </PanelGroup>
+          </Card>
+        </div>
       </div>
 
-      {/* Bottom Section - 20% */}
-      <div className="h-[20vh] p-4 space-y-4">
-        {/* Live Stats */}
-        <LiveStatsPanel
-          stats={mockStats}
-          connectionStatus="connected"
-        />
-
-        {/* Detection Feed */}
-        <LiveDetectionFeed
-          detections={mockDetections}
-        />
+      {/* Main Content */}
+      <div className="container mx-auto px-6 py-6">
+        <div className="h-[calc(100vh-200px)]">
+          <InteractiveMap 
+            detections={mockDetections}
+            gpsTrail={gpsTrail}
+            currentLocation={location}
+          />
+        </div>
       </div>
     </div>
   );
