@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
-import { DashboardHeader } from './DashboardHeader';
 import { RecordedVideoPlayer } from './RecordedVideoPlayer';
 import { InteractiveMap } from './InteractiveMap';
-import { LiveDetectionFeed } from './LiveDetectionFeed';
-import { LiveStatsPanel } from './LiveStatsPanel';
-import { LiveStream, Detection, GPSPoint, StreamStats } from '@/types/civic';
+import { Detection, GPSPoint } from '@/types/civic';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useGeocoding } from '@/hooks/useGeocoding';
 import { Button } from '@/components/ui/button';
@@ -54,13 +51,6 @@ export const CivicDashboard: React.FC = () => {
     }
   ]);
 
-  const [mockStats, setMockStats] = useState<StreamStats>({
-    totalDetections: 23,
-    detectionsPerMinute: 2.1,
-    topIssueType: 'trash',
-    streamDuration: '02:34:12',
-    currentLocation: 'Requesting location...'
-  });
 
   // Create GPS trail from current location
   const [gpsTrail, setGpsTrail] = useState<GPSPoint[]>([]);
@@ -81,29 +71,33 @@ export const CivicDashboard: React.FC = () => {
     }
   }, [currentLocation, geocodeLocation]);
 
-  // Update stats when geocoding completes
-  useEffect(() => {
-    if (geocodingResult) {
-      setMockStats(prev => ({
-        ...prev,
-        currentLocation: getShortAddress(geocodingResult.formatted)
-      }));
-    }
-  }, [geocodingResult, getShortAddress]);
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header - 10% */}
-      <div className="h-[10vh] p-4">
-        <DashboardHeader
-          streamStatus="connected"
-          viewerCount={1247}
-          participantCount={3}
-        />
+      {/* Header */}
+      <div className="p-4">
+        <div className="bg-card rounded-lg p-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-civic-navy">
+                San Francisco Civic Monitor
+              </h1>
+              <p className="text-lg text-muted-foreground">
+                Civic Issue Video Analysis Dashboard
+              </p>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              San Francisco, CA • {new Date().toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Resizable Main Content - 80% */}
-      <div className="h-[70vh] p-4">
+      {/* Main Content */}
+      <div className="h-[80vh] p-4">
         <PanelGroup direction="horizontal" className="h-full">
           {/* Video Player Panel */}
           <Panel defaultSize={60} minSize={30}>
@@ -164,19 +158,6 @@ export const CivicDashboard: React.FC = () => {
         </PanelGroup>
       </div>
 
-      {/* Bottom Section - 20% */}
-      <div className="h-[20vh] p-4 space-y-4">
-        {/* Live Stats */}
-        <LiveStatsPanel
-          stats={mockStats}
-          connectionStatus="connected"
-        />
-
-        {/* Detection Feed */}
-        <LiveDetectionFeed
-          detections={mockDetections}
-        />
-      </div>
     </div>
   );
 };
