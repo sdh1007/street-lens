@@ -8,33 +8,50 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* San Francisco Civic Colors */
+    --background: 0 0% 98%;
+    --foreground: 217 91% 14%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 217 91% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 217 91% 14%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Navy Blue Primary */
+    --primary: 217 91% 14%;
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Gold Secondary */
+    --secondary: 45 96% 53%;
+    --secondary-foreground: 217 91% 14%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 217 32% 96%;
+    --muted-foreground: 217 32% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Gold Accent */
+    --accent: 45 96% 53%;
+    --accent-foreground: 217 91% 14%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 217 32% 91%;
+    --input: 217 32% 91%;
+    --ring: 217 91% 14%;
+
+    /* Custom civic colors */
+    --civic-navy: 217 91% 14%;
+    --civic-gold: 45 96% 53%;
+    --civic-gold-light: 45 96% 73%;
+    --civic-blue-light: 217 91% 34%;
+    --civic-gray: 217 32% 91%;
+    
+    /* Live indicators */
+    --live-pulse: 0 100% 63%;
+    --success: 142 76% 36%;
+    --warning: 38 92% 50%;
+    --info: 217 91% 59%;
 
     --radius: 0.5rem;
 
@@ -56,33 +73,40 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 217 91% 8%;
+    --foreground: 0 0% 98%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 217 91% 10%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 217 91% 10%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 45 96% 53%;
+    --primary-foreground: 217 91% 14%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 217 91% 14%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 217 91% 12%;
+    --muted-foreground: 217 32% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 45 96% 53%;
+    --accent-foreground: 217 91% 14%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 62% 51%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 217 91% 15%;
+    --input: 217 91% 15%;
+    --ring: 45 96% 53%;
+
+    /* Dark mode civic colors */
+    --civic-navy: 217 91% 14%;
+    --civic-gold: 45 96% 53%;
+    --civic-gold-light: 45 96% 63%;
+    --civic-blue-light: 217 91% 44%;
+    --civic-gray: 217 91% 15%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -100,6 +124,36 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+  }
+}
+
+@layer components {
+  /* Live indicator pulse animation */
+  .live-pulse {
+    @apply relative;
+  }
+  
+  .live-pulse::before {
+    content: '';
+    @apply absolute inset-0 rounded-full bg-red-500 animate-ping opacity-75;
+  }
+  
+  /* Scrollbar styling */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-muted rounded-full;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50;
+  }
+  
+  /* Map styles */
+  .leaflet-container {
+    @apply rounded-lg;
   }
 }
