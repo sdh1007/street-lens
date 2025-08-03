@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { X, MapPin, AlertCircle } from 'lucide-react';
+import { X, MapPin, AlertCircle, ArrowLeft } from 'lucide-react';
 
 interface StreetViewModalProps {
   isOpen: boolean;
@@ -211,6 +211,15 @@ export const StreetViewModal: React.FC<StreetViewModalProps> = ({
         <DialogHeader className="p-4 pb-2">
           <DialogTitle className="flex items-center justify-between">
             <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                className="h-8 w-8 p-0 hover-lift-modern"
+                title="Back to incident details"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
               <MapPin className="h-5 w-5 text-civic-navy" />
               <div>
                 <h2 className="text-lg font-bold text-civic-navy">
@@ -226,6 +235,7 @@ export const StreetViewModal: React.FC<StreetViewModalProps> = ({
               size="sm"
               onClick={onClose}
               className="h-8 w-8 p-0 hover-lift-modern"
+              title="Close"
             >
               <X className="h-4 w-4" />
             </Button>
