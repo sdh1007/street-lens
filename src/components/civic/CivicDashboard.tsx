@@ -5,6 +5,7 @@ import { InteractiveMap } from './InteractiveMap';
 import { Detection, GPSPoint } from '@/types/civic';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useGeocoding } from '@/hooks/useGeocoding';
+import { useSFCivicData } from '@/hooks/useSFCivicData';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -25,7 +26,10 @@ export const CivicDashboard: React.FC = () => {
   // Real geocoding hook
   const { result: geocodingResult, geocodeLocation, getShortAddress } = useGeocoding();
 
-  // Mock data for demo
+  // Real SF 311 data
+  const { detections: sfDetections, isLoading: isSFDataLoading, error: sfDataError } = useSFCivicData();
+
+  // Mock data for demo (keeping as fallback)
   const [mockDetections, setMockDetections] = useState<Detection[]>([
     {
       id: '1',
@@ -99,9 +103,9 @@ export const CivicDashboard: React.FC = () => {
               {/* Modern Status and Time */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                 <Badge className="modern-button text-white px-4 py-2 text-sm font-medium float-subtle status-pulse">
-                  <div className="w-2 h-2 bg-white rounded-full mr-2 animate-pulse"></div>
+                  <div className={`w-2 h-2 rounded-full mr-2 ${isSFDataLoading ? 'bg-yellow-400 animate-pulse' : sfDataError ? 'bg-red-400' : 'bg-white animate-pulse'}`}></div>
                   <Wifi className="h-3 w-3 mr-1" />
-                  System Online
+                  {isSFDataLoading ? 'Loading Data' : sfDataError ? 'Data Error' : `${sfDetections.length} Reports Active`}
                 </Badge>
                 
                 <div className="glass-dark px-4 py-2 rounded-full">
@@ -150,12 +154,12 @@ export const CivicDashboard: React.FC = () => {
               <div className="h-full p-3 bg-gradient-to-br from-muted/20 to-background animate-slide-in-right">
                 {/* Map Container */}
                 <div className="h-full rounded-xl overflow-hidden shadow-xl hover-lift-modern">
-                  <InteractiveMap
-                    detections={mockDetections}
-                    gpsTrail={gpsTrail}
-                    currentLocation={currentLocation}
-                    className="h-full"
-                  />
+            <InteractiveMap 
+              detections={sfDetections}
+              gpsTrail={gpsTrail}
+              currentLocation={currentLocation}
+              className="h-full"
+            />
                 </div>
                 
                 {/* Modern Location Error Display */}
