@@ -824,8 +824,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         
         {/* Enhanced Drawing Panel */}
         {isDrawingPanelOpen && (
-          <div className="absolute top-4 right-4 glass bg-white/95 backdrop-blur-sm p-4 rounded-xl shadow-lg z-20 w-80 animate-slide-in-left">
-            <div className="flex items-center justify-between mb-4">
+          <div className="absolute top-4 right-4 glass bg-white/95 backdrop-blur-sm rounded-xl shadow-lg z-20 w-80 animate-slide-in-left max-h-[calc(100vh-8rem)] flex flex-col">
+            <div className="flex items-center justify-between p-4 pb-2 border-b">
               <div className="flex items-center gap-2">
                 <Edit3 className="h-5 w-5 text-civic-navy" />
                 <h4 className="text-lg font-semibold text-civic-navy">Drawing Tools</h4>
@@ -840,33 +840,35 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
               </Button>
             </div>
             
-            {/* Drawing Type Selection */}
-            <div className="mb-4">
+            <div className="overflow-y-auto flex-1 p-4 space-y-4">
+            
+            {/* Drawing Type */}
+            <div>
               <label className="text-sm font-medium text-gray-700 mb-2 block">Drawing Type</label>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <Button
                   size="sm"
                   variant={drawingType === 'concern' ? 'default' : 'outline'}
                   onClick={() => setDrawingType('concern')}
-                  className="flex-1"
+                  className="flex items-center justify-center gap-1 h-10"
                 >
-                  <span className="mr-1">⚠️</span>
+                  <span>⚠️</span>
                   Concern
                 </Button>
                 <Button
                   size="sm"
                   variant={drawingType === 'route' ? 'default' : 'outline'}
                   onClick={() => setDrawingType('route')}
-                  className="flex-1"
+                  className="flex items-center justify-center gap-1 h-10"
                 >
-                  <span className="mr-1">🗺️</span>
+                  <span>🗺️</span>
                   Route
                 </Button>
               </div>
             </div>
             
-            {/* Enhanced Color Selection with Full Rainbow Spectrum */}
-            <div className="mb-4">
+            {/* Color Palette */}
+            <div>
               <label className="text-sm font-medium text-gray-700 mb-2 block">Color Palette</label>
               <div className="grid grid-cols-10 gap-1 max-h-40 overflow-y-auto p-2 border rounded bg-gray-50">
                 {drawingColors[drawingType].map((color, index) => (
@@ -907,7 +909,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             </div>
             
             {/* Drawing Tools */}
-            <div className="mb-4">
+            <div>
               <label className="text-sm font-medium text-gray-700 mb-2 block">Tools</label>
               <div className="grid grid-cols-3 gap-2">
                 <Button
@@ -940,7 +942,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
               </div>
             </div>
             
-            {/* Enhanced Drawing Stats & Actions */}
+            {/* Drawing Stats & Actions */}
             <div className="border-t pt-3">
               <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 mb-3">
                 <div className="text-center">
@@ -993,6 +995,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
                   Clear
                 </Button>
               </div>
+            </div>
             </div>
           </div>
         )}
