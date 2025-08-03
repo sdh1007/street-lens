@@ -7,7 +7,7 @@ import { Eye, Users, Wifi, WifiOff, Settings, Maximize2 } from 'lucide-react';
 interface DashboardHeaderProps {
   streamStatus: 'connected' | 'offline' | 'connecting';
   viewerCount: number;
-  participantCount: number;
+  participantCount: number; // Now represents active reporters
   className?: string;
 }
 
@@ -22,7 +22,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       case 'connected':
         return {
           icon: <Wifi className="h-4 w-4" />,
-          text: 'Live Stream Active',
+          text: 'System Online',
           variant: 'default' as const,
           className: 'bg-success text-white'
         };
@@ -36,7 +36,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       default:
         return {
           icon: <WifiOff className="h-4 w-4" />,
-          text: 'Stream Offline',
+          text: 'System Offline',
           variant: 'outline' as const,
           className: 'bg-destructive text-white'
         };
@@ -56,7 +56,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                 San Francisco Civic Monitor
               </h1>
               <p className="text-lg text-muted-foreground">
-                Live Street Monitoring Dashboard
+                Recorded Footage Analysis Dashboard
               </p>
             </div>
             
@@ -79,7 +79,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Users className="h-4 w-4" />
                 <span className="font-medium">{participantCount}</span>
-                <span>active</span>
+                <span>active reporters</span>
               </div>
             </div>
 
@@ -102,14 +102,14 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         {streamStatus === 'connected' && (
           <div className="mt-4 p-3 bg-gradient-to-r from-live-pulse/20 to-civic-gold/20 rounded-lg border border-live-pulse/30">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-live-pulse rounded-full animate-pulse"></div>
-                  <span className="font-medium text-civic-navy">LIVE MONITORING ACTIVE</span>
-                </div>
-                <span className="text-sm text-muted-foreground">
-                  Real-time civic issue detection in progress
-                </span>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-green-600 rounded-full"></div>
+                    <span className="font-medium text-civic-navy">RECORDED FOOTAGE AVAILABLE</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    User-submitted civic issue documentation
+                  </span>
               </div>
               
               <div className="text-sm text-muted-foreground">

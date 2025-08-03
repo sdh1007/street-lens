@@ -187,11 +187,11 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       const currentMarker = new (window as any).google.maps.Marker({
         position: { lat: currentLocation.lat, lng: currentLocation.lng },
         map: googleMapRef.current,
-        title: 'Live Stream Location',
+        title: 'Recording Location',
         icon: {
           path: (window as any).google.maps.SymbolPath.CIRCLE,
           scale: 12,
-          fillColor: '#ef4444', // Red to match live indicator
+          fillColor: '#16a34a', // Green to match recorded indicator
           fillOpacity: 1,
           strokeColor: '#ffffff',
           strokeWeight: 4,
@@ -204,10 +204,10 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         content: `
           <div class="p-3 text-center">
             <div class="flex items-center gap-2 justify-center mb-2">
-              <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-              <strong class="text-red-600">LIVE STREAM LOCATION</strong>
+              <div class="w-3 h-3 bg-green-600 rounded-full"></div>
+              <strong class="text-green-600">RECORDING LOCATION</strong>
             </div>
-            <p class="text-sm text-gray-600">Video feed is streaming from this location</p>
+            <p class="text-sm text-gray-600">Video footage was recorded from this location</p>
             <p class="text-xs text-gray-500 mt-1">
               ${currentLocation.lat.toFixed(6)}, ${currentLocation.lng.toFixed(6)}
             </p>
@@ -351,8 +351,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
               </>
             )}
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-              <span>Live Stream Location</span>
+              <div className="w-3 h-3 bg-green-600 rounded-full"></div>
+              <span>Recording Location</span>
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardHeader } from './DashboardHeader';
-import { DailyVideoStream } from './DailyVideoStream';
+import { RecordedVideoPlayer } from './RecordedVideoPlayer';
 import { InteractiveMap } from './InteractiveMap';
 import { LiveDetectionFeed } from './LiveDetectionFeed';
 import { LiveStatsPanel } from './LiveStatsPanel';
@@ -103,12 +103,13 @@ export const CivicDashboard: React.FC = () => {
 
       {/* Main Content - 80% */}
       <div className="h-[70vh] p-4 grid grid-cols-1 lg:grid-cols-5 gap-4">
-        {/* Video Stream - 60% */}
+        {/* Recorded Video Player - 60% */}
         <div className="lg:col-span-3">
-          <DailyVideoStream
-            roomUrl="https://demo.daily.co/room"
+          <RecordedVideoPlayer
             currentLocation={currentLocation}
             locationAddress={geocodingResult?.formatted}
+            submittedBy="Civic Reporter #1247"
+            submittedAt={new Date(Date.now() - 300000).toISOString()} // 5 minutes ago
             className="h-full"
           />
         </div>
