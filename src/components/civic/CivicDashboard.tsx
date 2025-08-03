@@ -110,12 +110,12 @@ export const CivicDashboard: React.FC = () => {
     <>
       {isMapFullscreen ? (
         // Fullscreen Map Layout - ENTIRE Website
-        <div className="fixed inset-0 z-50 bg-background">
+        <div className="fixed inset-0 z-50 bg-background m-0 p-0 overflow-hidden">
           <InteractiveMap 
             detections={sfDetections}
             gpsTrail={gpsTrail}
             currentLocation={currentLocation}
-            className="h-full w-full"
+            className="h-screen w-screen m-0 p-0 border-none rounded-none"
             showPastCases={showPastCases}
             onTogglePastCases={setShowPastCases}
             isMapFullscreen={isMapFullscreen}
