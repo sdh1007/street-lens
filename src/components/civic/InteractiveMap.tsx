@@ -56,30 +56,38 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const [selectedColor, setSelectedColor] = useState('#ff0000');
   const [isDrawingPanelOpen, setIsDrawingPanelOpen] = useState(false);
 
-  // Enhanced rainbow color options
+  // Comprehensive rainbow color palette with full spectrum diversity
   const rainbowColors = [
-    // Reds
-    '#ff0000', '#ff1a1a', '#ff3333', '#ff4d4d',
-    // Oranges  
-    '#ff6600', '#ff8000', '#ff9933', '#ffb366',
-    // Yellows
-    '#ffcc00', '#ffdd00', '#ffee00', '#ffff00',
+    // Reds & Pinks
+    '#ff0000', '#dc143c', '#b22222', '#8b0000', '#ff1493', '#ff69b4', '#ff6347', '#ff4500',
+    // Oranges & Corals
+    '#ffa500', '#ff8c00', '#ff7f50', '#ff6347', '#ffd700', '#ffb347', '#ff9500', '#e67e22',
+    // Yellows & Golds
+    '#ffff00', '#ffd700', '#ffeb3b', '#fff44f', '#f1c40f', '#f39c12', '#e74c3c', '#d4af37',
     // Greens
-    '#66ff66', '#33ff33', '#00ff00', '#00cc00',
-    // Blues
-    '#0066ff', '#0080ff', '#00ccff', '#00ffff',
-    // Purples
-    '#6600ff', '#8000ff', '#9933ff', '#b366ff',
-    // Pinks
-    '#ff00ff', '#ff33cc', '#ff6699', '#ff9999',
-    // Additional colors
-    '#000000', '#333333', '#666666', '#999999',
-    '#cccccc', '#ffffff', '#8b4513', '#daa520'
+    '#00ff00', '#32cd32', '#228b22', '#006400', '#00ff7f', '#00fa9a', '#7cfc00', '#9acd32',
+    '#90ee90', '#98fb98', '#2e8b57', '#3cb371', '#20b2aa', '#008b8b', '#008080', '#00ced1',
+    // Blues & Cyans
+    '#0000ff', '#4169e1', '#1e90ff', '#00bfff', '#87ceeb', '#87cefa', '#6495ed', '#4682b4',
+    '#5f9ea0', '#483d8b', '#191970', '#000080', '#00008b', '#0047ab', '#002fa7', '#003366',
+    // Purples & Violets
+    '#8a2be2', '#9400d3', '#9932cc', '#ba55d3', '#da70d6', '#dda0dd', '#ee82ee', '#ff00ff',
+    '#c71585', '#db7093', '#663399', '#6a0dad', '#7b68ee', '#9370db', '#8b008b', '#800080',
+    // Browns & Earth Tones
+    '#8b4513', '#a0522d', '#cd853f', '#daa520', '#b8860b', '#d2691e', '#bc8f8f', '#f4a460',
+    // Grays & Neutrals
+    '#000000', '#2f2f2f', '#696969', '#808080', '#a9a9a9', '#c0c0c0', '#d3d3d3', '#ffffff',
+    // Vibrant & Neon Colors
+    '#00ffff', '#ff00ff', '#00ff00', '#ffff00', '#ff0080', '#80ff00', '#0080ff', '#8000ff',
+    // Pastel Colors
+    '#ffb3e6', '#b3d9ff', '#b3ffb3', '#ffffb3', '#ffccb3', '#e6b3ff', '#d9ffb3', '#ffb3d9',
+    // Additional Unique Colors
+    '#40e0d0', '#48d1cc', '#00ced1', '#5f9ea0', '#008b8b', '#2f4f4f', '#708090', '#778899'
   ];
 
   const drawingColors = {
-    concern: rainbowColors.slice(0, 16), // First 16 colors
-    route: rainbowColors.slice(16, 32)   // Last 16 colors
+    concern: rainbowColors.slice(0, Math.ceil(rainbowColors.length / 2)), // First half
+    route: rainbowColors.slice(Math.ceil(rainbowColors.length / 2))      // Second half
   };
 
   // Heatmap category configurations
@@ -838,21 +846,31 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
               </div>
             </div>
             
-            {/* Enhanced Color Selection with Rainbow Options */}
+            {/* Enhanced Color Selection with Full Rainbow Spectrum */}
             <div className="mb-4">
               <label className="text-sm font-medium text-gray-700 mb-2 block">Color Palette</label>
-              <div className="grid grid-cols-8 gap-1.5 max-h-32 overflow-y-auto">
+              <div className="grid grid-cols-10 gap-1 max-h-40 overflow-y-auto p-2 border rounded bg-gray-50">
                 {drawingColors[drawingType].map((color, index) => (
                   <button
                     key={color}
-                    className={`w-6 h-6 rounded-full border-2 transition-all hover:scale-110 ${
-                      selectedColor === color ? 'border-gray-800 ring-2 ring-blue-500' : 'border-gray-300'
+                    className={`w-5 h-5 rounded-full border transition-all hover:scale-125 hover:z-10 relative ${
+                      selectedColor === color ? 'border-2 border-gray-900 ring-2 ring-blue-500 z-20' : 'border border-gray-300'
                     }`}
                     style={{ backgroundColor: color }}
                     onClick={() => setSelectedColor(color)}
-                    title={`Color ${index + 1}: ${color}`}
+                    title={`${color} (${index + 1}/${drawingColors[drawingType].length})`}
                   />
                 ))}
+              </div>
+              
+              {/* Color Categories for Easy Selection */}
+              <div className="mt-2 flex flex-wrap gap-1">
+                <span className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded">Reds & Pinks</span>
+                <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded">Oranges</span>
+                <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-700 rounded">Yellows</span>
+                <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded">Greens</span>
+                <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">Blues</span>
+                <span className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded">Purples</span>
               </div>
               
               {/* Custom Color Input */}
@@ -862,10 +880,10 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
                   type="color"
                   value={selectedColor}
                   onChange={(e) => setSelectedColor(e.target.value)}
-                  className="w-8 h-8 rounded border border-gray-300 cursor-pointer"
-                  title="Choose custom color"
+                  className="w-10 h-8 rounded border border-gray-300 cursor-pointer"
+                  title="Choose any custom color"
                 />
-                <span className="text-xs text-gray-500 ml-1">{selectedColor}</span>
+                <span className="text-xs text-gray-500 ml-1 font-mono">{selectedColor.toUpperCase()}</span>
               </div>
             </div>
             
