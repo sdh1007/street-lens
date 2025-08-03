@@ -3,16 +3,20 @@ import DailyIframe from '@daily-co/daily-js';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Maximize2, Minimize2, Volume2, VolumeX, Users, Wifi, WifiOff } from 'lucide-react';
+import { Maximize2, Minimize2, Volume2, VolumeX, Users, Wifi, WifiOff, MapPin } from 'lucide-react';
 import { DailyCallState } from '@/types/civic';
 
 interface DailyVideoStreamProps {
   roomUrl: string;
+  currentLocation?: { lat: number; lng: number } | null;
+  locationAddress?: string;
   className?: string;
 }
 
 export const DailyVideoStream: React.FC<DailyVideoStreamProps> = ({ 
   roomUrl, 
+  currentLocation,
+  locationAddress,
   className = "" 
 }) => {
   const callFrameRef = useRef<any>(null);
@@ -136,19 +140,35 @@ export const DailyVideoStream: React.FC<DailyVideoStreamProps> = ({
 
   return (
     <Card className={`relative overflow-hidden ${className} ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
-      {/* Stream Header */}
-      <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/50 to-transparent p-4">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <Badge variant="secondary" className="bg-civic-navy text-white">
-              {getConnectionIcon()}
-              <span className="ml-2">{getConnectionText()}</span>
-            </Badge>
-            {callState.connectionState === 'connected' && (
-              <Badge variant="outline" className="bg-black/20 text-white border-white/30">
-                <Users className="h-3 w-3 mr-1" />
-                {callState.participants.length} participants
+      {/* Stream Header with Location Info */}
+      <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/70 to-transparent p-4">
+        <div className="flex justify-between items-start">
+          <div className="flex flex-col gap-2">
+            {/* Connection Status */}
+            <div className="flex items-center gap-3">
+              <Badge variant="secondary" className="bg-civic-navy text-white">
+                {getConnectionIcon()}
+                <span className="ml-2">{getConnectionText()}</span>
               </Badge>
+              {callState.connectionState === 'connected' && (
+                <Badge variant="outline" className="bg-black/20 text-white border-white/30">
+                  <Users className="h-3 w-3 mr-1" />
+                  {callState.participants.length} participants
+                </Badge>
+              )}
+            </div>
+            
+            {/* Location Info */}
+            {currentLocation && (
+              <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-3 py-2 rounded-lg">
+                <MapPin className="h-4 w-4 text-civic-gold" />
+                <div className="text-white">
+                  <p className="text-sm font-medium">Streaming from:</p>
+                  <p className="text-xs text-civic-gold-light">
+                    {locationAddress || `${currentLocation.lat.toFixed(4)}, ${currentLocation.lng.toFixed(4)}`}
+                  </p>
+                </div>
+              </div>
             )}
           </div>
           
@@ -199,6 +219,11 @@ export const DailyVideoStream: React.FC<DailyVideoStreamProps> = ({
             <div className="text-center text-white">
               <Users className="h-16 w-16 mx-auto mb-4 text-civic-gold" />
               <p className="text-lg">Waiting for stream to start...</p>
+              {currentLocation && (
+                <p className="text-sm text-civic-gold-light mt-2">
+                  Ready to stream from {locationAddress || 'current location'}
+                </p>
+              )}
             </div>
           </div>
         )}

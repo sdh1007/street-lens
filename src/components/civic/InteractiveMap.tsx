@@ -182,21 +182,48 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     clearMarkers();
     updateHeatmapLayers();
 
-    // Add current location marker
+    // Add current location marker with enhanced styling
     if (currentLocation) {
       const currentMarker = new (window as any).google.maps.Marker({
         position: { lat: currentLocation.lat, lng: currentLocation.lng },
         map: googleMapRef.current,
-        title: 'Current Location',
+        title: 'Live Stream Location',
         icon: {
           path: (window as any).google.maps.SymbolPath.CIRCLE,
-          scale: 10,
-          fillColor: '#3b82f6',
+          scale: 12,
+          fillColor: '#ef4444', // Red to match live indicator
           fillOpacity: 1,
           strokeColor: '#ffffff',
-          strokeWeight: 3,
+          strokeWeight: 4,
         },
+        animation: (window as any).google.maps.Animation.BOUNCE,
       });
+
+      // Add info window for current location
+      const locationInfoWindow = new (window as any).google.maps.InfoWindow({
+        content: `
+          <div class="p-3 text-center">
+            <div class="flex items-center gap-2 justify-center mb-2">
+              <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+              <strong class="text-red-600">LIVE STREAM LOCATION</strong>
+            </div>
+            <p class="text-sm text-gray-600">Video feed is streaming from this location</p>
+            <p class="text-xs text-gray-500 mt-1">
+              ${currentLocation.lat.toFixed(6)}, ${currentLocation.lng.toFixed(6)}
+            </p>
+          </div>
+        `
+      });
+
+      currentMarker.addListener('click', () => {
+        locationInfoWindow.open(googleMapRef.current, currentMarker);
+      });
+
+      // Stop animation after 3 seconds but keep the special styling
+      setTimeout(() => {
+        currentMarker.setAnimation(null);
+      }, 3000);
+
       markersRef.current.push(currentMarker);
     }
 
@@ -324,8 +351,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
               </>
             )}
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-              <span>Current Location</span>
+              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+              <span>Live Stream Location</span>
             </div>
           </div>
         </div>

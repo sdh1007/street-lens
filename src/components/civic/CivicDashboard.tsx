@@ -107,6 +107,8 @@ export const CivicDashboard: React.FC = () => {
         <div className="lg:col-span-3">
           <DailyVideoStream
             roomUrl="https://demo.daily.co/room"
+            currentLocation={currentLocation}
+            locationAddress={geocodingResult?.formatted}
             className="h-full"
           />
         </div>
