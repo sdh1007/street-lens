@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Detection } from '@/types/civic';
 import { MapPin, Clock, Target, User, Camera, Eye, X } from 'lucide-react';
+import { StreetViewPreview } from './StreetViewPreview';
 
 interface IndividualReportModalProps {
   isOpen: boolean;
@@ -20,6 +22,9 @@ export const IndividualReportModal: React.FC<IndividualReportModalProps> = ({
   onViewStreetView,
   reportLocation
 }) => {
+  const [showPreview, setShowPreview] = useState(false);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   if (!report) return null;
 
   const getDetectionTypeLabel = (type: Detection['type']) => {
@@ -180,13 +185,35 @@ export const IndividualReportModal: React.FC<IndividualReportModalProps> = ({
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4 border-t">
-            <Button
-              onClick={() => onViewStreetView(report.location.lat, report.location.lng, report.id)}
-              className="flex-1 bg-civic-navy text-white hover:bg-civic-blue-light transition-colors flex items-center justify-center gap-2"
-            >
-              <Eye className="h-4 w-4" />
-              View Street View
-            </Button>
+            <HoverCard open={showPreview} onOpenChange={setShowPreview}>
+              <HoverCardTrigger asChild>
+                <Button
+                  onClick={() => onViewStreetView(report.location.lat, report.location.lng, report.id)}
+                  onMouseEnter={() => {
+                    hoverTimeoutRef.current = setTimeout(() => {
+                      setShowPreview(true);
+                    }, 3000);
+                  }}
+                  onMouseLeave={() => {
+                    if (hoverTimeoutRef.current) {
+                      clearTimeout(hoverTimeoutRef.current);
+                      hoverTimeoutRef.current = null;
+                    }
+                    setShowPreview(false);
+                  }}
+                  className="flex-1 bg-civic-navy text-white hover:bg-civic-blue-light transition-colors flex items-center justify-center gap-2"
+                >
+                  <Eye className="h-4 w-4" />
+                  View Street View
+                </Button>
+              </HoverCardTrigger>
+              <HoverCardContent side="top" className="p-0 border-0">
+                <StreetViewPreview
+                  lat={report.location.lat}
+                  lng={report.location.lng}
+                />
+              </HoverCardContent>
+            </HoverCard>
             <Button
               onClick={() => {
                 console.log('Opening report recording:', report.id);

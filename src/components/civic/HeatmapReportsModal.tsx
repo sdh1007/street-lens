@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Detection } from '@/types/civic';
 import { MapPin, Clock, Target, User, Camera, Eye } from 'lucide-react';
 import { useGeocoding } from '@/hooks/useGeocoding';
 import { IndividualReportModal } from './IndividualReportModal';
 import { StreetViewModal } from './StreetViewModal';
+import { StreetViewPreview } from './StreetViewPreview';
 
 interface HeatmapReportsModalProps {
   isOpen: boolean;
@@ -29,6 +31,8 @@ export const HeatmapReportsModal: React.FC<HeatmapReportsModalProps> = ({
   const [reportLocations, setReportLocations] = useState<{[key: string]: string}>({});
   const [selectedReport, setSelectedReport] = useState<Detection | null>(null);
   const [showIndividualReport, setShowIndividualReport] = useState(false);
+  const [hoveredReportId, setHoveredReportId] = useState<string | null>(null);
+  const hoverTimeoutRefs = useRef<{[key: string]: NodeJS.Timeout}>({});
 
   // Geocode the main location when modal opens
   useEffect(() => {
@@ -281,13 +285,37 @@ export const HeatmapReportsModal: React.FC<HeatmapReportsModalProps> = ({
                           <Target className="h-3 w-3" />
                           View Details
                         </button>
-                        <button
-                          onClick={() => onViewStreetView(report.location.lat, report.location.lng)}
-                          className="flex-1 bg-gray-500 text-white text-xs py-2 px-3 rounded hover:bg-gray-600 transition-colors flex items-center justify-center gap-1"
-                        >
-                          <Eye className="h-3 w-3" />
-                          Street View
-                        </button>
+                        <HoverCard open={hoveredReportId === report.id} onOpenChange={(open) => {
+                          if (!open) setHoveredReportId(null);
+                        }}>
+                          <HoverCardTrigger asChild>
+                            <button
+                              onClick={() => onViewStreetView(report.location.lat, report.location.lng)}
+                              onMouseEnter={() => {
+                                hoverTimeoutRefs.current[report.id] = setTimeout(() => {
+                                  setHoveredReportId(report.id);
+                                }, 3000);
+                              }}
+                              onMouseLeave={() => {
+                                if (hoverTimeoutRefs.current[report.id]) {
+                                  clearTimeout(hoverTimeoutRefs.current[report.id]);
+                                  delete hoverTimeoutRefs.current[report.id];
+                                }
+                                setHoveredReportId(null);
+                              }}
+                              className="flex-1 bg-gray-500 text-white text-xs py-2 px-3 rounded hover:bg-gray-600 transition-colors flex items-center justify-center gap-1"
+                            >
+                              <Eye className="h-3 w-3" />
+                              Street View
+                            </button>
+                          </HoverCardTrigger>
+                          <HoverCardContent side="top" className="p-0 border-0">
+                            <StreetViewPreview
+                              lat={report.location.lat}
+                              lng={report.location.lng}
+                            />
+                          </HoverCardContent>
+                        </HoverCard>
                       </div>
                     </div>
                   </div>
