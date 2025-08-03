@@ -61,7 +61,8 @@ export const StreetViewModal: React.FC<StreetViewModalProps> = ({
         streetViewService.getPanorama({
           location: { lat, lng },
           radius: 150, // Increased radius
-          preference: google.maps.StreetViewPreference.NEAREST
+          preference: google.maps.StreetViewPreference.NEAREST,
+          source: google.maps.StreetViewSource.OUTDOOR // Only outdoor panoramas
         }, (data: any, status: any) => {
           console.log('StreetView: getPanorama result - status:', status);
           
@@ -88,7 +89,9 @@ export const StreetViewModal: React.FC<StreetViewModalProps> = ({
                   linksControl: true,
                   motionTracking: false,
                   motionTrackingControl: false,
-                  showRoadLabels: true
+                  showRoadLabels: true,
+                  sources: [google.maps.StreetViewSource.OUTDOOR], // Restrict to outdoor sources only
+                  clickToGo: true
                 }
               );
 
