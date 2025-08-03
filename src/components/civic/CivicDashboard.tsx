@@ -5,10 +5,28 @@ import { InteractiveMap } from './InteractiveMap';
 import { LiveDetectionFeed } from './LiveDetectionFeed';
 import { LiveStatsPanel } from './LiveStatsPanel';
 import { LiveStream, Detection, GPSPoint, StreamStats } from '@/types/civic';
+import { useGeolocation } from '@/hooks/useGeolocation';
+import { useGeocoding } from '@/hooks/useGeocoding';
+import { Button } from '@/components/ui/button';
+import { MapPin, Navigation } from 'lucide-react';
 
 export const CivicDashboard: React.FC = () => {
+  // Real geolocation hook
+  const { 
+    location: currentLocation, 
+    error: locationError, 
+    isLoading: locationLoading,
+    getCurrentPosition 
+  } = useGeolocation({ 
+    enableHighAccuracy: true,
+    watch: true // Continuously track location
+  });
+
+  // Real geocoding hook
+  const { result: geocodingResult, geocodeLocation, getShortAddress } = useGeocoding();
+
   // Mock data for demo
-  const [mockDetections] = useState<Detection[]>([
+  const [mockDetections, setMockDetections] = useState<Detection[]>([
     {
       id: '1',
       type: 'trash',
@@ -35,18 +53,42 @@ export const CivicDashboard: React.FC = () => {
     }
   ]);
 
-  const [mockStats] = useState<StreamStats>({
+  const [mockStats, setMockStats] = useState<StreamStats>({
     totalDetections: 23,
     detectionsPerMinute: 2.1,
     topIssueType: 'trash',
     streamDuration: '02:34:12',
-    currentLocation: 'Market Street, San Francisco'
+    currentLocation: 'Requesting location...'
   });
 
-  const mockGpsTrail: GPSPoint[] = [
-    { lat: 37.7749, lng: -122.4194, timestamp: new Date().toISOString() },
-    { lat: 37.7759, lng: -122.4184, timestamp: new Date().toISOString() }
-  ];
+  // Create GPS trail from current location
+  const [gpsTrail, setGpsTrail] = useState<GPSPoint[]>([]);
+
+  // Update GPS trail when location changes
+  useEffect(() => {
+    if (currentLocation) {
+      const newPoint: GPSPoint = {
+        lat: currentLocation.lat,
+        lng: currentLocation.lng,
+        timestamp: new Date().toISOString()
+      };
+      
+      setGpsTrail(prev => [...prev, newPoint].slice(-20)); // Keep last 20 points
+      
+      // Geocode the current location
+      geocodeLocation(currentLocation.lat, currentLocation.lng);
+    }
+  }, [currentLocation, geocodeLocation]);
+
+  // Update stats when geocoding completes
+  useEffect(() => {
+    if (geocodingResult) {
+      setMockStats(prev => ({
+        ...prev,
+        currentLocation: getShortAddress(geocodingResult.formatted)
+      }));
+    }
+  }, [geocodingResult, getShortAddress]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -70,13 +112,39 @@ export const CivicDashboard: React.FC = () => {
         </div>
 
         {/* Map - 40% */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-2">
+          {/* Location Controls */}
+          <div className="flex gap-2 justify-end">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={getCurrentPosition}
+              disabled={locationLoading}
+              className="flex items-center gap-2"
+            >
+              {locationLoading ? (
+                <div className="w-3 h-3 border border-gray-300 border-t-civic-navy rounded-full animate-spin" />
+              ) : (
+                <Navigation className="h-3 w-3" />
+              )}
+              {locationLoading ? 'Getting Location...' : 'Update Location'}
+            </Button>
+          </div>
+          
           <InteractiveMap
             detections={mockDetections}
-            gpsTrail={mockGpsTrail}
-            currentLocation={{ lat: 37.7749, lng: -122.4194 }}
+            gpsTrail={gpsTrail}
+            currentLocation={currentLocation}
             className="h-full"
           />
+          
+          {/* Location Error Display */}
+          {locationError && (
+            <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
+              <p className="text-sm text-destructive font-medium">Location Error</p>
+              <p className="text-xs text-destructive/70">{locationError}</p>
+            </div>
+          )}
         </div>
       </div>
 
