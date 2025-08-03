@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Detection } from '@/types/civic';
 import { MapPin, Clock, Target, User, Camera, Eye } from 'lucide-react';
+import { useGeocoding } from '@/hooks/useGeocoding';
 
 interface HeatmapReportsModalProps {
   isOpen: boolean;
@@ -22,6 +23,61 @@ export const HeatmapReportsModal: React.FC<HeatmapReportsModalProps> = ({
   category,
   onViewStreetView
 }) => {
+  const { result: geocodingResult, geocodeLocation, getShortAddress } = useGeocoding();
+  const [reportLocations, setReportLocations] = useState<{[key: string]: string}>({});
+
+  // Geocode the main location when modal opens
+  useEffect(() => {
+    if (isOpen && location) {
+      geocodeLocation(location.lat, location.lng);
+    }
+  }, [isOpen, location, geocodeLocation]);
+
+  // Geocode individual report locations
+  useEffect(() => {
+    if (isOpen && reports.length > 0) {
+      reports.forEach(report => {
+        if (!reportLocations[report.id]) {
+          // Use Google Maps Geocoder for each report location
+          if ((window as any).google?.maps) {
+            const geocoder = new (window as any).google.maps.Geocoder();
+            const latlng = { lat: report.location.lat, lng: report.location.lng };
+            
+            geocoder.geocode({ location: latlng }, (results: any[], status: string) => {
+              if (status === 'OK' && results[0]) {
+                const addressComponents = results[0].address_components;
+                const roads: string[] = [];
+                
+                // Extract street names and route information
+                addressComponents.forEach((component: any) => {
+                  if (component.types.includes('route')) {
+                    roads.push(component.short_name);
+                  }
+                });
+                
+                // Check if it's an intersection by looking for multiple routes
+                let locationText = '';
+                if (roads.length > 1) {
+                  locationText = roads.join(' & '); // Intersection format
+                } else if (roads.length === 1) {
+                  locationText = roads[0];
+                } else {
+                  // Fallback to formatted address or neighborhood
+                  const parts = results[0].formatted_address.split(',');
+                  locationText = parts[0].trim();
+                }
+                
+                setReportLocations(prev => ({
+                  ...prev,
+                  [report.id]: locationText
+                }));
+              }
+            });
+          }
+        }
+      });
+    }
+  }, [isOpen, reports, reportLocations]);
   const getDetectionTypeLabel = (type: Detection['type']) => {
     switch (type) {
       case 'trash':
@@ -97,7 +153,7 @@ export const HeatmapReportsModal: React.FC<HeatmapReportsModalProps> = ({
               </h2>
               {location && (
                 <p className="text-sm text-muted-foreground">
-                  Near {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
+                  Near {geocodingResult?.formatted ? getShortAddress(geocodingResult.formatted) : `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`}
                 </p>
               )}
             </div>
@@ -172,7 +228,7 @@ export const HeatmapReportsModal: React.FC<HeatmapReportsModalProps> = ({
                           <div className="flex items-center gap-1">
                             <MapPin className="h-3 w-3 text-gray-400" />
                             <span className="text-gray-500">
-                              {report.location.lat.toFixed(4)}, {report.location.lng.toFixed(4)}
+                              {reportLocations[report.id] || `${report.location.lat.toFixed(4)}, ${report.location.lng.toFixed(4)}`}
                             </span>
                           </div>
                           <div className="flex items-center gap-1">
