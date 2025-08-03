@@ -320,6 +320,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     updateHeatmapLayers();
   }, [activeCategories, viewMode, isMapLoaded]);
 
+  console.log('InteractiveMap rendering', { detections, gpsTrail, currentLocation, isMapLoaded });
+
   return (
     <Card className={`overflow-hidden ${className}`}>
       <div className="p-4 border-b bg-civic-navy text-white">

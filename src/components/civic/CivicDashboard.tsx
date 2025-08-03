@@ -65,6 +65,8 @@ export const CivicDashboard: React.FC = () => {
     }
   }, [location, geocodeLocation]);
 
+  console.log('CivicDashboard rendering', { location, geocodingResult });
+  
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
