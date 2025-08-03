@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Detection, GPSPoint } from '@/types/civic';
-import { MapPin, Layers, Satellite, Navigation, Eye, Maximize2, Minimize2, Edit3, Square, Route, MapPinIcon, Trash2 } from 'lucide-react';
+import { MapPin, Layers, Satellite, Navigation, Eye, Maximize2, Minimize2, Edit3, Square, Route, MapPinIcon, Trash2, Undo2, Redo2, Palette, Settings, X } from 'lucide-react';
 import { HeatmapReportsModal } from './HeatmapReportsModal';
 import { StreetViewModal } from './StreetViewModal';
 
@@ -51,6 +51,16 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const [streetViewLocation, setStreetViewLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [drawingMode, setDrawingMode] = useState<'none' | 'polygon' | 'polyline' | 'marker'>('none');
   const [drawingType, setDrawingType] = useState<'concern' | 'route'>('concern');
+  const [drawingHistory, setDrawingHistory] = useState<any[]>([]);
+  const [redoStack, setRedoStack] = useState<any[]>([]);
+  const [selectedColor, setSelectedColor] = useState('#ff0000');
+  const [isDrawingPanelOpen, setIsDrawingPanelOpen] = useState(false);
+
+  // Enhanced color options for different drawing types
+  const drawingColors = {
+    concern: ['#ff0000', '#ff6b35', '#f7931e', '#ffcd3c'],
+    route: ['#0066cc', '#2196f3', '#4caf50', '#9c27b0']
+  };
 
   // Heatmap category configurations
   const heatmapCategories = {
@@ -121,24 +131,24 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     }
   }, [mapType]);
 
-  // Initialize Drawing Manager
+  // Initialize Drawing Manager with enhanced options
   const initializeDrawingManager = (map: any) => {
     const drawingManager = new (window as any).google.maps.drawing.DrawingManager({
       drawingMode: null,
       drawingControl: false,
       polygonOptions: {
-        fillColor: drawingType === 'concern' ? '#ff4444' : '#4444ff',
-        fillOpacity: 0.3,
-        strokeWeight: 2,
-        strokeColor: drawingType === 'concern' ? '#ff0000' : '#0000ff',
+        fillColor: selectedColor,
+        fillOpacity: 0.35,
+        strokeWeight: 3,
+        strokeColor: selectedColor,
         clickable: true,
         editable: true,
         zIndex: 1
       },
       polylineOptions: {
-        strokeColor: drawingType === 'concern' ? '#ff0000' : '#0000ff',
+        strokeColor: selectedColor,
         strokeOpacity: 1.0,
-        strokeWeight: 3,
+        strokeWeight: 4,
         clickable: true,
         editable: true,
         zIndex: 1
@@ -146,11 +156,11 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       markerOptions: {
         icon: {
           path: (window as any).google.maps.SymbolPath.CIRCLE,
-          scale: 8,
-          fillColor: drawingType === 'concern' ? '#ff0000' : '#0000ff',
+          scale: 10,
+          fillColor: selectedColor,
           fillOpacity: 1,
           strokeColor: '#ffffff',
-          strokeWeight: 2,
+          strokeWeight: 3,
         },
         draggable: true
       }
@@ -159,36 +169,56 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     drawingManager.setMap(map);
     drawingManagerRef.current = drawingManager;
 
-    // Handle drawing completion
+    // Handle drawing completion with enhanced features
     (window as any).google.maps.event.addListener(drawingManager, 'overlaycomplete', (event: any) => {
       const shape = event.overlay;
       const type = event.type;
       
-      // Store the shape
-      drawnShapesRef.current.push({
+      // Store the shape with enhanced metadata
+      const shapeData = {
         shape,
         type,
         category: drawingType,
-        timestamp: new Date().toISOString()
-      });
+        color: selectedColor,
+        timestamp: new Date().toISOString(),
+        id: `${type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      };
+      
+      // Add to drawing history for undo functionality
+      setDrawingHistory(prev => [...prev, shapeData]);
+      setRedoStack([]); // Clear redo stack on new action
+      
+      drawnShapesRef.current.push(shapeData);
 
-      // Add click listener for info window
+      // Enhanced click listener for info window with better styling
       const infoWindow = new (window as any).google.maps.InfoWindow();
       
-      (window as any).google.maps.event.addListener(shape, 'click', () => {
+      (window as any).google.maps.event.addListener(shape, 'click', (clickEvent: any) => {
         const content = `
-          <div class="p-3">
-            <div class="flex items-center gap-2 mb-2">
+          <div class="p-4 min-w-[200px]">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-4 h-4 rounded-full" style="background-color: ${selectedColor}"></div>
               <span class="text-lg">${drawingType === 'concern' ? '⚠️' : '🗺️'}</span>
-              <strong>${drawingType === 'concern' ? 'Area of Concern' : 'Planned Route'}</strong>
+              <strong class="text-lg">${drawingType === 'concern' ? 'Area of Concern' : 'Planned Route'}</strong>
             </div>
-            <p class="text-sm text-gray-600 mb-2">
-              ${type === 'polygon' ? 'Marked area' : type === 'polyline' ? 'Route path' : 'Point marker'}
-            </p>
-            <button onclick="this.parentElement.parentElement.parentElement.removeShape()" 
-                    class="text-xs bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">
-              Delete
-            </button>
+            <div class="space-y-2">
+              <p class="text-sm text-gray-600">
+                <strong>Type:</strong> ${type === 'polygon' ? 'Area marker' : type === 'polyline' ? 'Route path' : 'Point marker'}
+              </p>
+              <p class="text-xs text-gray-500">
+                <strong>Created:</strong> ${new Date(shapeData.timestamp).toLocaleString()}
+              </p>
+              <div class="flex gap-2 mt-3">
+                <button onclick="window.deleteShape('${shapeData.id}')" 
+                        class="text-xs bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-colors">
+                  🗑️ Delete
+                </button>
+                <button onclick="window.editShape('${shapeData.id}')" 
+                        class="text-xs bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition-colors">
+                  ✏️ Edit
+                </button>
+              </div>
+            </div>
           </div>
         `;
         
@@ -196,7 +226,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         if (type === 'marker') {
           infoWindow.open(map, shape);
         } else {
-          infoWindow.setPosition(event.latLng || shape.getPath().getAt(0));
+          infoWindow.setPosition(clickEvent.latLng || shape.getPath().getAt(0));
           infoWindow.open(map);
         }
       });
@@ -205,6 +235,30 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       setDrawingMode('none');
       drawingManager.setDrawingMode(null);
     });
+    
+    // Add global functions for shape management
+    (window as any).deleteShape = (shapeId: string) => {
+      const shapeIndex = drawnShapesRef.current.findIndex(s => s.id === shapeId);
+      if (shapeIndex !== -1) {
+        const shapeData = drawnShapesRef.current[shapeIndex];
+        shapeData.shape.setMap(null);
+        drawnShapesRef.current.splice(shapeIndex, 1);
+        setDrawingHistory(prev => prev.filter(h => h.id !== shapeId));
+      }
+    };
+    
+    (window as any).editShape = (shapeId: string) => {
+      const shapeData = drawnShapesRef.current.find(s => s.id === shapeId);
+      if (shapeData) {
+        shapeData.shape.setEditable(true);
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+          if (shapeData.shape) {
+            shapeData.shape.setEditable(false);
+          }
+        }, 5000);
+      }
+    };
   };
 
   // Drawing control functions
@@ -233,23 +287,20 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const updateDrawingOptions = () => {
     if (!drawingManagerRef.current) return;
     
-    const color = drawingType === 'concern' ? '#ff0000' : '#0000ff';
-    const fillColor = drawingType === 'concern' ? '#ff4444' : '#4444ff';
-    
     drawingManagerRef.current.setOptions({
       polygonOptions: {
-        fillColor: fillColor,
-        fillOpacity: 0.3,
-        strokeWeight: 2,
-        strokeColor: color,
+        fillColor: selectedColor,
+        fillOpacity: 0.35,
+        strokeWeight: 3,
+        strokeColor: selectedColor,
         clickable: true,
         editable: true,
         zIndex: 1
       },
       polylineOptions: {
-        strokeColor: color,
+        strokeColor: selectedColor,
         strokeOpacity: 1.0,
-        strokeWeight: 3,
+        strokeWeight: 4,
         clickable: true,
         editable: true,
         zIndex: 1
@@ -257,15 +308,38 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       markerOptions: {
         icon: {
           path: (window as any).google.maps.SymbolPath.CIRCLE,
-          scale: 8,
-          fillColor: color,
+          scale: 10,
+          fillColor: selectedColor,
           fillOpacity: 1,
           strokeColor: '#ffffff',
-          strokeWeight: 2,
+          strokeWeight: 3,
         },
         draggable: true
       }
     });
+  };
+
+  // Undo/Redo functionality
+  const undoLastDrawing = () => {
+    if (drawingHistory.length === 0) return;
+    
+    const lastDrawing = drawingHistory[drawingHistory.length - 1];
+    lastDrawing.shape.setMap(null);
+    
+    setDrawingHistory(prev => prev.slice(0, -1));
+    setRedoStack(prev => [...prev, lastDrawing]);
+    drawnShapesRef.current = drawnShapesRef.current.filter(s => s.id !== lastDrawing.id);
+  };
+
+  const redoLastDrawing = () => {
+    if (redoStack.length === 0) return;
+    
+    const lastRedoItem = redoStack[redoStack.length - 1];
+    lastRedoItem.shape.setMap(googleMapRef.current);
+    
+    setRedoStack(prev => prev.slice(0, -1));
+    setDrawingHistory(prev => [...prev, lastRedoItem]);
+    drawnShapesRef.current.push(lastRedoItem);
   };
 
   const clearAllDrawings = () => {
@@ -273,6 +347,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       shape.setMap(null);
     });
     drawnShapesRef.current = [];
+    setDrawingHistory([]);
+    setRedoStack([]);
     setDrawingMode('none');
     if (drawingManagerRef.current) {
       drawingManagerRef.current.setDrawingMode(null);
@@ -281,13 +357,15 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   const toggleDrawingType = () => {
     setDrawingType(prev => prev === 'concern' ? 'route' : 'concern');
-    updateDrawingOptions();
+    // Update color to match new type
+    const newColors = drawingColors[drawingType === 'concern' ? 'route' : 'concern'];
+    setSelectedColor(newColors[0]);
   };
 
-  // Update drawing options when type changes
+  // Update drawing options when type or color changes
   useEffect(() => {
     updateDrawingOptions();
-  }, [drawingType]);
+  }, [drawingType, selectedColor]);
 
   // Generate individual reports for clicking
   const generateIndividualReport = (lat: number, lng: number, category: string): Detection => {
@@ -518,50 +596,42 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           
             {/* Enhanced Map Controls */}
             <div className="flex flex-wrap gap-1">
-            {/* Drawing Tools */}
+            {/* Enhanced Drawing Tools */}
             <div className="flex gap-1 border-r border-white/20 pr-1 mr-1">
               <Button
                 size="sm"
-                variant={drawingType === 'concern' ? 'secondary' : 'ghost'}
-                onClick={toggleDrawingType}
+                variant="ghost"
+                onClick={() => setIsDrawingPanelOpen(!isDrawingPanelOpen)}
                 className="text-white hover:bg-white/20 h-8 px-2 hover-lift focus-ring"
-                title={`Switch to ${drawingType === 'concern' ? 'Route Planning' : 'Area Marking'}`}
+                title="Drawing Tools"
               >
-                <span className="text-sm mr-1">{drawingType === 'concern' ? '⚠️' : '🗺️'}</span>
-                <span className="hidden sm:inline text-xs">
-                  {drawingType === 'concern' ? 'Concern' : 'Route'}
-                </span>
+                <Edit3 className="h-3 w-3 mr-1" />
+                <span className="hidden sm:inline text-xs">Draw</span>
               </Button>
               
-              <Button
-                size="sm"
-                variant={drawingMode === 'polygon' ? 'secondary' : 'ghost'}
-                onClick={() => toggleDrawingMode('polygon')}
-                className="text-white hover:bg-white/20 h-8 w-8 p-0 hover-lift focus-ring"
-                title="Draw Area"
-              >
-                <Square className="h-3 w-3" />
-              </Button>
+              {drawingHistory.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={undoLastDrawing}
+                  className="text-white hover:bg-white/20 h-8 w-8 p-0 hover-lift focus-ring"
+                  title="Undo Last Drawing"
+                >
+                  <Undo2 className="h-3 w-3" />
+                </Button>
+              )}
               
-              <Button
-                size="sm"
-                variant={drawingMode === 'polyline' ? 'secondary' : 'ghost'}
-                onClick={() => toggleDrawingMode('polyline')}
-                className="text-white hover:bg-white/20 h-8 w-8 p-0 hover-lift focus-ring"
-                title="Draw Route"
-              >
-                <Route className="h-3 w-3" />
-              </Button>
-              
-              <Button
-                size="sm"
-                variant={drawingMode === 'marker' ? 'secondary' : 'ghost'}
-                onClick={() => toggleDrawingMode('marker')}
-                className="text-white hover:bg-white/20 h-8 w-8 p-0 hover-lift focus-ring"
-                title="Place Marker"
-              >
-                <MapPinIcon className="h-3 w-3" />
-              </Button>
+              {redoStack.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={redoLastDrawing}
+                  className="text-white hover:bg-white/20 h-8 w-8 p-0 hover-lift focus-ring"
+                  title="Redo Last Drawing"
+                >
+                  <Redo2 className="h-3 w-3" />
+                </Button>
+              )}
               
               {drawnShapesRef.current.length > 0 && (
                 <Button
@@ -667,10 +737,152 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           </div>
         )}
         
+        {/* Enhanced Drawing Panel */}
+        {isDrawingPanelOpen && (
+          <div className="absolute top-4 right-4 glass bg-white/95 backdrop-blur-sm p-4 rounded-xl shadow-lg z-20 w-80 animate-slide-in-left">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Edit3 className="h-5 w-5 text-civic-navy" />
+                <h4 className="text-lg font-semibold text-civic-navy">Drawing Tools</h4>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setIsDrawingPanelOpen(false)}
+                className="h-8 w-8 p-0 hover:bg-gray-100"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {/* Drawing Type Selection */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Drawing Type</label>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant={drawingType === 'concern' ? 'default' : 'outline'}
+                  onClick={() => setDrawingType('concern')}
+                  className="flex-1"
+                >
+                  <span className="mr-1">⚠️</span>
+                  Concern
+                </Button>
+                <Button
+                  size="sm"
+                  variant={drawingType === 'route' ? 'default' : 'outline'}
+                  onClick={() => setDrawingType('route')}
+                  className="flex-1"
+                >
+                  <span className="mr-1">🗺️</span>
+                  Route
+                </Button>
+              </div>
+            </div>
+            
+            {/* Color Selection */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Color</label>
+              <div className="grid grid-cols-4 gap-2">
+                {drawingColors[drawingType].map((color) => (
+                  <button
+                    key={color}
+                    className={`w-8 h-8 rounded-full border-2 transition-all hover:scale-110 ${
+                      selectedColor === color ? 'border-gray-800 ring-2 ring-blue-500' : 'border-gray-300'
+                    }`}
+                    style={{ backgroundColor: color }}
+                    onClick={() => setSelectedColor(color)}
+                    title={`Select ${color}`}
+                  />
+                ))}
+              </div>
+            </div>
+            
+            {/* Drawing Tools */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Tools</label>
+              <div className="grid grid-cols-3 gap-2">
+                <Button
+                  size="sm"
+                  variant={drawingMode === 'polygon' ? 'default' : 'outline'}
+                  onClick={() => toggleDrawingMode('polygon')}
+                  className="flex flex-col items-center py-3 h-auto"
+                >
+                  <Square className="h-4 w-4 mb-1" />
+                  <span className="text-xs">Area</span>
+                </Button>
+                <Button
+                  size="sm"
+                  variant={drawingMode === 'polyline' ? 'default' : 'outline'}
+                  onClick={() => toggleDrawingMode('polyline')}
+                  className="flex flex-col items-center py-3 h-auto"
+                >
+                  <Route className="h-4 w-4 mb-1" />
+                  <span className="text-xs">Route</span>
+                </Button>
+                <Button
+                  size="sm"
+                  variant={drawingMode === 'marker' ? 'default' : 'outline'}
+                  onClick={() => toggleDrawingMode('marker')}
+                  className="flex flex-col items-center py-3 h-auto"
+                >
+                  <MapPinIcon className="h-4 w-4 mb-1" />
+                  <span className="text-xs">Marker</span>
+                </Button>
+              </div>
+            </div>
+            
+            {/* Drawing Stats & Actions */}
+            <div className="border-t pt-3">
+              <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
+                <span>Drawings: {drawnShapesRef.current.length}</span>
+                <span>History: {drawingHistory.length}</span>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={undoLastDrawing}
+                  disabled={drawingHistory.length === 0}
+                  className="flex-1"
+                >
+                  <Undo2 className="h-3 w-3 mr-1" />
+                  Undo
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={redoLastDrawing}
+                  disabled={redoStack.length === 0}
+                  className="flex-1"
+                >
+                  <Redo2 className="h-3 w-3 mr-1" />
+                  Redo
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={clearAllDrawings}
+                  disabled={drawnShapesRef.current.length === 0}
+                  className="flex-1"
+                >
+                  <Trash2 className="h-3 w-3 mr-1" />
+                  Clear
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Drawing Mode Indicator */}
-        {drawingMode !== 'none' && (
-          <div className="absolute top-4 right-4 glass bg-blue-600/95 backdrop-blur-sm p-3 rounded-xl shadow-lg z-20 animate-slide-in-left">
+        {drawingMode !== 'none' && !isDrawingPanelOpen && (
+          <div className="absolute top-4 left-4 glass bg-blue-600/95 backdrop-blur-sm p-3 rounded-xl shadow-lg z-20 animate-scale-in">
             <div className="flex items-center gap-2 text-white">
+              <div 
+                className="w-3 h-3 rounded-full" 
+                style={{ backgroundColor: selectedColor }}
+              />
               <Edit3 className="h-4 w-4" />
               <span className="text-sm font-medium">
                 Drawing {drawingMode === 'polygon' ? 'Area' : drawingMode === 'polyline' ? 'Route' : 'Marker'}
