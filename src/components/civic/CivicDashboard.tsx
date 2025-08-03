@@ -154,7 +154,7 @@ export const CivicDashboard: React.FC = () => {
 
       {/* Main Content Area - Full Width Map */}
       <div className="px-4 sm:px-6 pb-6">
-        <div className="h-[75vh] min-h-[600px] relative">
+        <div className={`h-[75vh] min-h-[600px] relative transition-all duration-300 ${showVideoFeed ? 'ml-[500px]' : ''}`}>
           {isMapFullscreen ? (
             // Fullscreen Map Layout
             <div className="h-full rounded-xl overflow-hidden shadow-xl modern-glow animate-fade-in">
