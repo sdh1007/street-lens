@@ -49,6 +49,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>('trash');
   const [showStreetViewModal, setShowStreetViewModal] = useState(false);
   const [streetViewLocation, setStreetViewLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [streetViewSource, setStreetViewSource] = useState<'map' | 'reports'>('map');
   const [drawingMode, setDrawingMode] = useState<'none' | 'polygon' | 'polyline' | 'marker'>('none');
   const [drawingType, setDrawingType] = useState<'concern' | 'route'>('concern');
   const [drawingHistory, setDrawingHistory] = useState<any[]>([]);
@@ -571,7 +572,25 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const handleViewStreetView = (lat: number, lng: number) => {
     setStreetViewLocation({ lat, lng });
     setShowStreetViewModal(true);
-    setShowReportsModal(false); // Close reports modal when opening street view
+    
+    // Track if this was opened from reports modal
+    if (showReportsModal) {
+      setStreetViewSource('reports');
+      setShowReportsModal(false); // Close reports modal when opening street view
+    } else {
+      setStreetViewSource('map');
+    }
+  };
+
+  // Handle going back from street view
+  const handleBackFromStreetView = () => {
+    setShowStreetViewModal(false);
+    
+    // If we came from reports modal, reopen it
+    if (streetViewSource === 'reports') {
+      setShowReportsModal(true);
+    }
+    // If we came from map, just stay on map (modal is already closed)
   };
 
   const toggleViewMode = () => {
@@ -1105,7 +1124,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           lat={streetViewLocation?.lat || 0}
           lng={streetViewLocation?.lng || 0}
           showBackButton={true}
-          onBackToReport={() => setShowStreetViewModal(false)}
+          onBackToReport={handleBackFromStreetView}
         />
       </div>
     </Card>
