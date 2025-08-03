@@ -25,18 +25,27 @@ export const StreetViewModal: React.FC<StreetViewModalProps> = ({
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
+    console.log('StreetView: useEffect triggered, isOpen:', isOpen, 'lat:', lat, 'lng:', lng);
+    
     if (!isOpen) {
+      console.log('StreetView: Modal not open, resetting state');
       setIsLoading(true);
       setHasError(false);
       setErrorMessage('');
       return;
     }
 
+    console.log('StreetView: Modal is open, proceeding with initialization');
+
     const initializeStreetView = () => {
-      if (!streetViewRef.current) return;
+      if (!streetViewRef.current) {
+        console.log('StreetView: No ref available');
+        return;
+      }
       
       try {
-        console.log('Initializing Street View at:', lat, lng);
+        console.log('StreetView: Initializing Street View at:', lat, lng);
+        console.log('StreetView: streetViewRef.current:', streetViewRef.current);
         
         // Check if Google Maps API is loaded
         if (!(window as any).google?.maps) {
@@ -115,11 +124,17 @@ export const StreetViewModal: React.FC<StreetViewModalProps> = ({
     };
 
     // Wait for Google Maps API to be loaded
+    console.log('StreetView: Checking if Google Maps API is loaded:', !!(window as any).google?.maps);
+    
     if ((window as any).google?.maps) {
+      console.log('StreetView: Google Maps API already loaded, initializing immediately');
       initializeStreetView();
     } else {
+      console.log('StreetView: Google Maps API not loaded, waiting...');
       const checkGoogleMaps = setInterval(() => {
+        console.log('StreetView: Checking Google Maps API...');
         if ((window as any).google?.maps) {
+          console.log('StreetView: Google Maps API loaded, initializing now');
           clearInterval(checkGoogleMaps);
           initializeStreetView();
         }
