@@ -5,6 +5,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Detection } from '@/types/civic';
 import { MapPin, Clock, Target, User, Camera, Eye } from 'lucide-react';
 import { useGeocoding } from '@/hooks/useGeocoding';
+import { IndividualReportModal } from './IndividualReportModal';
+import { StreetViewModal } from './StreetViewModal';
 
 interface HeatmapReportsModalProps {
   isOpen: boolean;
@@ -25,6 +27,8 @@ export const HeatmapReportsModal: React.FC<HeatmapReportsModalProps> = ({
 }) => {
   const { result: geocodingResult, geocodeLocation, getShortAddress } = useGeocoding();
   const [reportLocations, setReportLocations] = useState<{[key: string]: string}>({});
+  const [selectedReport, setSelectedReport] = useState<Detection | null>(null);
+  const [showIndividualReport, setShowIndividualReport] = useState(false);
 
   // Geocode the main location when modal opens
   useEffect(() => {
@@ -78,6 +82,23 @@ export const HeatmapReportsModal: React.FC<HeatmapReportsModalProps> = ({
       });
     }
   }, [isOpen, reports, reportLocations]);
+
+  const [showStreetView, setShowStreetView] = useState(false);
+  const [streetViewCoords, setStreetViewCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+  const handleReportClick = (report: Detection) => {
+    setSelectedReport(report);
+    setShowIndividualReport(true);
+  };
+
+  const handleViewStreetViewFromReport = (lat: number, lng: number, reportId: string) => {
+    setStreetViewCoords({ lat, lng });
+    setShowStreetView(true);
+  };
+
+  const handleBackToReport = () => {
+    setShowStreetView(false);
+  };
   const getDetectionTypeLabel = (type: Detection['type']) => {
     switch (type) {
       case 'trash':
@@ -254,20 +275,18 @@ export const HeatmapReportsModal: React.FC<HeatmapReportsModalProps> = ({
                       {/* Action Buttons */}
                       <div className="flex gap-2">
                         <button
-                          onClick={() => onViewStreetView(report.location.lat, report.location.lng)}
+                          onClick={() => handleReportClick(report)}
                           className="flex-1 bg-civic-navy text-white text-xs py-2 px-3 rounded hover:bg-civic-blue-light transition-colors flex items-center justify-center gap-1"
                         >
-                          <Eye className="h-3 w-3" />
-                          View Street View
+                          <Target className="h-3 w-3" />
+                          View Details
                         </button>
                         <button
-                          onClick={() => {
-                            console.log('Opening report details:', report.id);
-                          }}
+                          onClick={() => onViewStreetView(report.location.lat, report.location.lng)}
                           className="flex-1 bg-gray-500 text-white text-xs py-2 px-3 rounded hover:bg-gray-600 transition-colors flex items-center justify-center gap-1"
                         >
-                          <Camera className="h-3 w-3" />
-                          View Recording
+                          <Eye className="h-3 w-3" />
+                          Street View
                         </button>
                       </div>
                     </div>
@@ -295,6 +314,28 @@ export const HeatmapReportsModal: React.FC<HeatmapReportsModalProps> = ({
               <span>{reports.length} total {reports.length === 1 ? 'report' : 'reports'}</span>
             </div>
           </div>
+        )}
+        
+        {/* Individual Report Modal */}
+        <IndividualReportModal
+          isOpen={showIndividualReport}
+          onClose={() => setShowIndividualReport(false)}
+          report={selectedReport}
+          onViewStreetView={handleViewStreetViewFromReport}
+          reportLocation={selectedReport ? reportLocations[selectedReport.id] : undefined}
+        />
+
+        {/* Street View Modal from Individual Report */}
+        {showStreetView && streetViewCoords && (
+          <StreetViewModal
+            isOpen={showStreetView}
+            onClose={() => setShowStreetView(false)}
+            onBackToReport={handleBackToReport}
+            lat={streetViewCoords.lat}
+            lng={streetViewCoords.lng}
+            reportId={selectedReport?.id}
+            showBackButton={true}
+          />
         )}
       </DialogContent>
     </Dialog>

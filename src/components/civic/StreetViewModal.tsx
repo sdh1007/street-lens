@@ -6,17 +6,23 @@ import { X, MapPin, AlertCircle, ArrowLeft } from 'lucide-react';
 interface StreetViewModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onBackToReport?: () => void;
   lat: number;
   lng: number;
   address?: string;
+  reportId?: string;
+  showBackButton?: boolean;
 }
 
 export const StreetViewModal: React.FC<StreetViewModalProps> = ({
   isOpen,
   onClose,
+  onBackToReport,
   lat,
   lng,
-  address
+  address,
+  reportId,
+  showBackButton = false
 }) => {
   const streetViewRef = useRef<HTMLDivElement>(null);
   const streetViewPanorama = useRef<any>(null);
@@ -211,15 +217,17 @@ export const StreetViewModal: React.FC<StreetViewModalProps> = ({
         <DialogHeader className="p-4 pb-2">
           <DialogTitle className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-                className="h-8 w-8 p-0 hover-lift-modern"
-                title="Back to incident details"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
+              {showBackButton && onBackToReport && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onBackToReport}
+                  className="h-8 w-8 p-0 hover-lift-modern"
+                  title="Back to incident details"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+              )}
               <MapPin className="h-5 w-5 text-civic-navy" />
               <div>
                 <h2 className="text-lg font-bold text-civic-navy">
