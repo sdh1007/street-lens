@@ -16,7 +16,11 @@ interface SFServiceRequest {
   };
 }
 
-export const useSFCivicData = () => {
+interface UseSFCivicDataOptions {
+  showPastCases?: boolean;
+}
+
+export const useSFCivicData = (options: UseSFCivicDataOptions = {}) => {
   const [detections, setDetections] = useState<Detection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,8 +66,12 @@ export const useSFCivicData = () => {
         setIsLoading(true);
         setError(null);
         
-        // Fetch recent data with limit
-        const response = await fetch('https://data.sfgov.org/resource/vw6y-z8j6.json?$limit=1000&$order=requested_datetime DESC');
+        // Build query based on options
+        const statusFilter = options.showPastCases ? 'Closed' : 'Open';
+        const query = `?$limit=1000&$order=requested_datetime DESC&status_description=${statusFilter}`;
+        
+        // Fetch data with status filter
+        const response = await fetch(`https://data.sfgov.org/resource/vw6y-z8j6.json${query}`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -82,7 +90,7 @@ export const useSFCivicData = () => {
     };
 
     fetchSFData();
-  }, []);
+  }, [options.showPastCases]);
 
   return { detections, isLoading, error };
 };

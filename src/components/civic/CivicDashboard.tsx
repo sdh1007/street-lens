@@ -26,8 +26,11 @@ export const CivicDashboard: React.FC = () => {
   // Real geocoding hook
   const { result: geocodingResult, geocodeLocation, getShortAddress } = useGeocoding();
 
+  // State for toggling between current and past cases
+  const [showPastCases, setShowPastCases] = useState(false);
+
   // Real SF 311 data
-  const { detections: sfDetections, isLoading: isSFDataLoading, error: sfDataError } = useSFCivicData();
+  const { detections: sfDetections, isLoading: isSFDataLoading, error: sfDataError } = useSFCivicData({ showPastCases });
 
   // Mock data for demo (keeping as fallback)
   const [mockDetections, setMockDetections] = useState<Detection[]>([
@@ -159,6 +162,8 @@ export const CivicDashboard: React.FC = () => {
               gpsTrail={gpsTrail}
               currentLocation={currentLocation}
               className="h-full"
+              showPastCases={showPastCases}
+              onTogglePastCases={setShowPastCases}
             />
                 </div>
                 

@@ -12,13 +12,17 @@ interface InteractiveMapProps {
   gpsTrail: GPSPoint[];
   currentLocation?: { lat: number; lng: number };
   className?: string;
+  showPastCases?: boolean;
+  onTogglePastCases?: (showPast: boolean) => void;
 }
 
 export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   detections,
   gpsTrail,
   currentLocation,
-  className = ""
+  className = "",
+  showPastCases = false,
+  onTogglePastCases
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const streetViewRef = useRef<HTMLDivElement>(null);
@@ -345,6 +349,22 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
                 {viewMode === 'heatmap' ? 'Heatmap' : 'Markers'}
               </span>
             </Button>
+            
+            {/* Past/Current Toggle */}
+            {onTogglePastCases && (
+              <Button
+                size="sm"
+                variant={showPastCases ? 'secondary' : 'ghost'}
+                onClick={() => onTogglePastCases(!showPastCases)}
+                className="text-white hover:bg-white/20 h-8 px-3 hover-lift focus-ring"
+                title={showPastCases ? 'Show Current Cases' : 'Show Past Cases'}
+              >
+                <span className="text-sm mr-1.5">{showPastCases ? '📚' : '🔄'}</span>
+                <span className="hidden sm:inline text-xs">
+                  {showPastCases ? 'Past' : 'Current'}
+                </span>
+              </Button>
+            )}
             
             <div className="flex gap-1">
               <Button
