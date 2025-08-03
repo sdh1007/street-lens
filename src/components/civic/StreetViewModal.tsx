@@ -37,7 +37,7 @@ export const StreetViewModal: React.FC<StreetViewModalProps> = ({
 
     console.log('StreetView: Modal is open, proceeding with initialization');
 
-    const initializeStreetView = () => {
+    const initializeStreetView = async () => {
       if (!streetViewRef.current) {
         console.log('StreetView: No ref available');
         return;
@@ -45,81 +45,100 @@ export const StreetViewModal: React.FC<StreetViewModalProps> = ({
       
       try {
         console.log('StreetView: Initializing Street View at:', lat, lng);
-        console.log('StreetView: streetViewRef.current:', streetViewRef.current);
         
         // Check if Google Maps API is loaded
         if (!(window as any).google?.maps) {
-          console.error('Google Maps API not loaded');
-          setHasError(true);
-          setErrorMessage('Google Maps API not loaded');
-          setIsLoading(false);
-          return;
+          throw new Error('Google Maps API not loaded');
         }
 
-        // Create Street View panorama
-        streetViewPanorama.current = new (window as any).google.maps.StreetViewPanorama(
-          streetViewRef.current,
-          {
-            position: { lat, lng },
-            pov: {
-              heading: 0,
-              pitch: 0,
-            },
-            zoom: 1,
-            addressControl: true,
-            enableCloseButton: false,
-            fullscreenControl: true,
-            motionTracking: false,
-            motionTrackingControl: false,
-            showRoadLabels: true,
-          }
-        );
-
-        // Check if street view is available at this location
-        const streetViewService = new (window as any).google.maps.StreetViewService();
-        streetViewService.getPanorama(
-          { 
-            location: { lat, lng }, 
-            radius: 100,
-            source: (window as any).google.maps.StreetViewSource.OUTDOOR
-          },
-          (data: any, status: string) => {
-            console.log('Street View status:', status);
-            setIsLoading(false);
+        const google = (window as any).google;
+        
+        // First check if Street View is available at this location
+        const streetViewService = new google.maps.StreetViewService();
+        
+        console.log('StreetView: Checking for Street View availability...');
+        
+        streetViewService.getPanorama({
+          location: { lat, lng },
+          radius: 150, // Increased radius
+          preference: google.maps.StreetViewPreference.NEAREST
+        }, (data: any, status: any) => {
+          console.log('StreetView: getPanorama result - status:', status);
+          
+          if (status === google.maps.StreetViewStatus.OK && data) {
+            console.log('StreetView: Creating panorama...');
             
-            if (status === 'OK') {
-              console.log('Street View available');
-              setHasError(false);
-            } else {
-              console.warn('Street View not available at this location, status:', status);
+            try {
+              // Create the street view panorama
+              streetViewPanorama.current = new google.maps.StreetViewPanorama(
+                streetViewRef.current,
+                {
+                  position: data.location.latLng || { lat, lng },
+                  pov: {
+                    heading: 0,
+                    pitch: 0
+                  },
+                  zoom: 1,
+                  visible: true,
+                  enableCloseButton: false,
+                  fullscreenControl: true,
+                  panControl: true,
+                  zoomControl: true,
+                  addressControl: true,
+                  linksControl: true,
+                  motionTracking: false,
+                  motionTrackingControl: false,
+                  showRoadLabels: true
+                }
+              );
+
+              console.log('StreetView: Panorama created, setting up listeners...');
+
+              // Add event listeners
+              streetViewPanorama.current.addListener('pano_changed', () => {
+                console.log('StreetView: Panorama loaded successfully');
+                setIsLoading(false);
+                setHasError(false);
+              });
+
+              streetViewPanorama.current.addListener('status_changed', () => {
+                const panoramaStatus = streetViewPanorama.current.getStatus();
+                console.log('StreetView: Status changed to:', panoramaStatus);
+                
+                if (panoramaStatus === google.maps.StreetViewStatus.OK) {
+                  setIsLoading(false);
+                  setHasError(false);
+                }
+              });
+
+              // Force loading to complete after a reasonable timeout
+              setTimeout(() => {
+                console.log('StreetView: Timeout reached, clearing loading state');
+                if (isLoading) {
+                  setIsLoading(false);
+                }
+              }, 2000);
+
+            } catch (panoramaError) {
+              console.error('StreetView: Error creating panorama:', panoramaError);
+              setIsLoading(false);
               setHasError(true);
-              setErrorMessage('Street View imagery is not available at this location. Try a different location or check back later.');
+              setErrorMessage('Failed to create Street View panorama');
             }
-          }
-        );
-
-        // Listen for panorama events
-        streetViewPanorama.current.addListener('pano_changed', () => {
-          console.log('Panorama changed');
-          setIsLoading(false);
-          setHasError(false);
-        });
-
-        streetViewPanorama.current.addListener('status_changed', () => {
-          const status = streetViewPanorama.current.getStatus();
-          console.log('Street View status changed:', status);
-          if (status !== 'OK') {
-            setHasError(true);
-            setErrorMessage('Street View could not load properly.');
+            
+          } else {
+            console.log('StreetView: No Street View available, status:', status);
             setIsLoading(false);
+            setHasError(true);
+            setErrorMessage('Street View imagery is not available at this location. Try clicking on a street or intersection.');
           }
         });
 
-      } catch (error) {
-        console.error('Error initializing Street View:', error);
-        setHasError(true);
-        setErrorMessage('Failed to initialize Street View.');
+      } catch (error: any) {
+        console.error('StreetView: Initialization error:', error);
         setIsLoading(false);
+        setHasError(true);
+        setErrorMessage(error.message || 'Failed to initialize Street View');
       }
     };
 
