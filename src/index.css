@@ -124,11 +124,53 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-balance;
+  }
+  
+  p {
+    @apply text-pretty;
   }
 }
 
 @layer components {
+  /* Hover and interaction improvements */
+  .hover-lift {
+    @apply transition-all duration-200 ease-out hover:scale-105 hover:shadow-lg;
+  }
+  
+  .hover-glow {
+    @apply transition-all duration-300 ease-out hover:shadow-lg;
+  }
+  
+  .hover-glow:hover {
+    box-shadow: 0 10px 25px -5px hsl(var(--civic-gold) / 0.25);
+  }
+  
+  /* Button improvements */
+  .btn-civic-primary {
+    @apply bg-civic-navy text-white hover:bg-civic-blue-light transition-all duration-200 shadow-md hover:shadow-lg;
+  }
+  
+  .btn-civic-secondary {
+    @apply bg-civic-gold text-civic-navy hover:bg-civic-gold-light transition-all duration-200 shadow-md hover:shadow-lg;
+  }
+  
+  /* Loading states */
+  .loading-shimmer {
+    @apply animate-pulse bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 bg-[length:200%_100%];
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  
   /* Live indicator pulse animation */
   .live-pulse {
     @apply relative;
@@ -136,12 +178,12 @@ All colors MUST be HSL.
   
   .live-pulse::before {
     content: '';
-    @apply absolute inset-0 rounded-full bg-red-500 animate-ping opacity-75;
+    @apply absolute inset-0 rounded-full bg-green-500 animate-pulse opacity-75;
   }
   
   /* Scrollbar styling */
   .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
   }
   
   .custom-scrollbar::-webkit-scrollbar-track {
@@ -149,11 +191,25 @@ All colors MUST be HSL.
   }
   
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50;
+    @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50 transition-colors;
+  }
+  
+  /* Enhanced focus states */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-gold focus-visible:ring-offset-2;
   }
   
   /* Map styles */
   .leaflet-container {
-    @apply rounded-lg;
+    @apply rounded-xl shadow-lg;
+  }
+  
+  /* Glass morphism effect */
+  .glass {
+    @apply bg-white/10 backdrop-blur-lg border border-white/20;
+  }
+  
+  .glass-dark {
+    @apply bg-black/20 backdrop-blur-lg border border-white/10;
   }
 }

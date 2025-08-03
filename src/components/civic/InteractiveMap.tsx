@@ -321,134 +321,163 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   }, [activeCategories, viewMode, isMapLoaded]);
 
   return (
-    <Card className={`overflow-hidden ${className}`}>
-      <div className="p-4 border-b bg-civic-navy text-white">
-        <div className="flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-semibold">Live Monitoring Map</h3>
-            <p className="text-sm text-civic-gold-light">Real-time detection tracking</p>
+    <Card className={`overflow-hidden shadow-xl ${className}`}>
+      {/* Enhanced Header */}
+      <div className="p-4 sm:p-6 border-b bg-gradient-to-r from-civic-navy via-civic-blue-light to-civic-navy text-white">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+          <div className="space-y-1">
+            <h3 className="text-lg sm:text-xl font-semibold tracking-tight">Live Monitoring Map</h3>
+            <p className="text-sm text-civic-gold-light font-medium">Real-time detection tracking</p>
           </div>
           
-          <div className="flex gap-1">
+          {/* Enhanced Map Controls */}
+          <div className="flex flex-wrap gap-1">
             <Button
               size="sm"
               variant={viewMode === 'heatmap' ? 'secondary' : 'ghost'}
               onClick={toggleViewMode}
-              className="text-white hover:bg-white/20 h-8"
+              className="text-white hover:bg-white/20 h-8 px-3 hover-lift focus-ring"
               title={viewMode === 'heatmap' ? 'Switch to Markers' : 'Switch to Heatmap'}
             >
-              {viewMode === 'heatmap' ? '🔥' : '📍'}
+              <span className="text-sm mr-1.5">{viewMode === 'heatmap' ? '🔥' : '📍'}</span>
+              <span className="hidden sm:inline text-xs">
+                {viewMode === 'heatmap' ? 'Heatmap' : 'Markers'}
+              </span>
             </Button>
             
-            <Button
-              size="sm"
-              variant={mapType === 'roadmap' ? 'secondary' : 'ghost'}
-              onClick={() => changeMapType('roadmap')}
-              className="text-white hover:bg-white/20 h-8"
-            >
-              <Navigation className="h-3 w-3" />
-            </Button>
-            <Button
-              size="sm"
-              variant={mapType === 'satellite' ? 'secondary' : 'ghost'}
-              onClick={() => changeMapType('satellite')}
-              className="text-white hover:bg-white/20 h-8"
-            >
-              <Satellite className="h-3 w-3" />
-            </Button>
-            <Button
-              size="sm"
-              variant={mapType === 'hybrid' ? 'secondary' : 'ghost'}
-              onClick={() => changeMapType('hybrid')}
-              className="text-white hover:bg-white/20 h-8"
-            >
-              <Layers className="h-3 w-3" />
-            </Button>
+            <div className="flex gap-1">
+              <Button
+                size="sm"
+                variant={mapType === 'roadmap' ? 'secondary' : 'ghost'}
+                onClick={() => changeMapType('roadmap')}
+                className="text-white hover:bg-white/20 h-8 w-8 p-0 hover-lift focus-ring"
+                title="Road Map"
+              >
+                <Navigation className="h-3 w-3" />
+              </Button>
+              <Button
+                size="sm"
+                variant={mapType === 'satellite' ? 'secondary' : 'ghost'}
+                onClick={() => changeMapType('satellite')}
+                className="text-white hover:bg-white/20 h-8 w-8 p-0 hover-lift focus-ring"
+                title="Satellite View"
+              >
+                <Satellite className="h-3 w-3" />
+              </Button>
+              <Button
+                size="sm"
+                variant={mapType === 'hybrid' ? 'secondary' : 'ghost'}
+                onClick={() => changeMapType('hybrid')}
+                className="text-white hover:bg-white/20 h-8 w-8 p-0 hover-lift focus-ring"
+                title="Hybrid View"
+              >
+                <Layers className="h-3 w-3" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
       
-      <div className="relative h-[500px]">
+      {/* Enhanced Map Container */}
+      <div className="relative h-[500px] animate-fade-in">
         <div ref={mapRef} className="w-full h-full" />
         
+        {/* Enhanced Loading State */}
         {!isMapLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center bg-civic-gray">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-civic-navy mx-auto mb-4"></div>
-              <p className="text-civic-navy">Loading map...</p>
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-civic-gray via-muted to-civic-gray">
+            <div className="text-center p-6 animate-scale-in">
+              <div className="relative">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-civic-navy mx-auto mb-4"></div>
+                <div className="absolute inset-0 rounded-full h-12 w-12 border-2 border-civic-gold/20 animate-pulse mx-auto"></div>
+              </div>
+              <p className="text-civic-navy font-medium">Loading interactive map...</p>
+              <p className="text-xs text-muted-foreground mt-1">Preparing San Francisco data</p>
             </div>
           </div>
         )}
         
-        {/* Compact Heatmap Controls */}
+        {/* Enhanced Heatmap Controls */}
         {viewMode === 'heatmap' && (
-          <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm p-2 rounded-lg shadow-lg z-10 max-w-xs">
-            <h4 className="text-xs font-semibold mb-2 text-civic-navy">Heatmap Layers</h4>
-            <div className="grid grid-cols-2 gap-1">
+          <div className="absolute top-4 left-4 glass bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-lg z-10 max-w-xs animate-slide-in-right">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-6 h-6 bg-civic-gold rounded-full flex items-center justify-center">
+                <span className="text-xs font-bold text-civic-navy">🔥</span>
+              </div>
+              <h4 className="text-sm font-semibold text-civic-navy">Heatmap Layers</h4>
+            </div>
+            <div className="grid grid-cols-1 gap-2">
               {Object.entries(heatmapCategories).map(([key, config]) => (
                 <label 
                   key={key}
-                  className="flex items-center gap-1 cursor-pointer hover:bg-gray-50 p-1 rounded text-xs"
+                  className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors group"
                 >
                   <input
                     type="checkbox"
                     checked={activeCategories.has(key)}
                     onChange={() => toggleCategory(key)}
-                    className="rounded border-gray-300 w-3 h-3"
+                    className="rounded border-gray-300 w-4 h-4 text-civic-gold focus:ring-civic-gold focus:ring-2"
                   />
-                  <span className="text-sm">{config.icon}</span>
-                  <span className="text-xs text-gray-700 leading-tight">{config.name}</span>
+                  <span className="text-base group-hover:scale-110 transition-transform">{config.icon}</span>
+                  <span className="text-sm text-gray-700 font-medium flex-1">{config.name}</span>
                 </label>
               ))}
             </div>
-            <div className="mt-2 pt-2 border-t border-gray-200">
-              <p className="text-xs text-gray-500">
-                Click anywhere to view reports
-              </p>
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <div className="flex items-center gap-2 text-civic-navy">
+                <MapPin className="h-3 w-3" />
+                <p className="text-xs font-medium">
+                  Click anywhere to view reports
+                </p>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Legend */}
-        <div className="absolute bottom-4 right-4 bg-white/95 backdrop-blur-sm p-3 rounded-lg shadow-lg z-10">
-          <h4 className="text-sm font-semibold mb-2">
-            {viewMode === 'heatmap' ? 'Heatmap Legend' : 'Detection Types'}
-          </h4>
-          <div className="space-y-1 text-xs">
+        {/* Enhanced Legend */}
+        <div className="absolute bottom-4 right-4 glass bg-white/95 backdrop-blur-sm p-4 rounded-xl shadow-lg z-10 min-w-[200px] animate-fade-in">
+          <div className="flex items-center gap-2 mb-3">
+            <Eye className="h-4 w-4 text-civic-navy" />
+            <h4 className="text-sm font-semibold text-civic-navy">
+              {viewMode === 'heatmap' ? 'Heatmap Legend' : 'Detection Types'}
+            </h4>
+          </div>
+          <div className="space-y-2 text-sm">
             {viewMode === 'heatmap' ? (
               <>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-2 bg-gradient-to-r from-transparent to-red-500"></div>
-                  <span>Litter/Trash</span>
+                <div className="flex items-center gap-3 hover:bg-gray-50 p-1 rounded transition-colors">
+                  <div className="w-6 h-3 bg-gradient-to-r from-transparent via-red-400 to-red-600 rounded-sm shadow-sm"></div>
+                  <span className="font-medium">Litter/Trash</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-2 bg-gradient-to-r from-transparent to-orange-500"></div>
-                  <span>Graffiti</span>
+                <div className="flex items-center gap-3 hover:bg-gray-50 p-1 rounded transition-colors">
+                  <div className="w-6 h-3 bg-gradient-to-r from-transparent via-orange-400 to-orange-600 rounded-sm shadow-sm"></div>
+                  <span className="font-medium">Graffiti</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-2 bg-gradient-to-r from-transparent to-yellow-500"></div>
-                  <span>Infrastructure</span>
+                <div className="flex items-center gap-3 hover:bg-gray-50 p-1 rounded transition-colors">
+                  <div className="w-6 h-3 bg-gradient-to-r from-transparent via-yellow-400 to-yellow-600 rounded-sm shadow-sm"></div>
+                  <span className="font-medium">Infrastructure</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-2 bg-gradient-to-r from-transparent to-purple-500"></div>
-                  <span>Road Blocked</span>
+                <div className="flex items-center gap-3 hover:bg-gray-50 p-1 rounded transition-colors">
+                  <div className="w-6 h-3 bg-gradient-to-r from-transparent via-purple-400 to-purple-600 rounded-sm shadow-sm"></div>
+                  <span className="font-medium">Road Blocked</span>
                 </div>
               </>
             ) : (
               <>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                  <span>Litter/Trash</span>
+                <div className="flex items-center gap-3 hover:bg-gray-50 p-1 rounded transition-colors">
+                  <div className="w-4 h-4 bg-red-500 rounded-full shadow-sm"></div>
+                  <span className="font-medium">Litter/Trash</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                  <span>Graffiti</span>
+                <div className="flex items-center gap-3 hover:bg-gray-50 p-1 rounded transition-colors">
+                  <div className="w-4 h-4 bg-orange-500 rounded-full shadow-sm"></div>
+                  <span className="font-medium">Graffiti</span>
                 </div>
               </>
             )}
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-600 rounded-full"></div>
-              <span>Recording Location</span>
+            <div className="border-t border-gray-200 pt-2 mt-2">
+              <div className="flex items-center gap-3 hover:bg-gray-50 p-1 rounded transition-colors">
+                <div className="w-4 h-4 bg-green-600 rounded-full shadow-sm live-pulse"></div>
+                <span className="font-medium text-green-700">Recording Location</span>
+              </div>
             </div>
           </div>
         </div>
