@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Detection, GPSPoint } from '@/types/civic';
 import { MapPin, Layers, Satellite, Navigation, Eye } from 'lucide-react';
+import { HeatmapReportsModal } from './HeatmapReportsModal';
 
 interface InteractiveMapProps {
   detections: Detection[];
@@ -32,6 +33,10 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const [activeCategories, setActiveCategories] = useState<Set<string>>(
     new Set(['trash', 'graffiti', 'infrastructure', 'road_blocked'])
   );
+  const [showReportsModal, setShowReportsModal] = useState(false);
+  const [selectedReports, setSelectedReports] = useState<Detection[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('trash');
 
   // Heatmap category configurations
   const heatmapCategories = {
@@ -96,6 +101,61 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     }
   }, [mapType]);
 
+  // Generate mock reports for heatmap areas
+  const generateReportsForArea = (lat: number, lng: number, category: string) => {
+    const reports: Detection[] = [];
+    const reportCount = Math.floor(Math.random() * 4) + 2; // 2-5 reports per area
+    
+    for (let i = 0; i < reportCount; i++) {
+      const offsetLat = lat + (Math.random() - 0.5) * 0.002; // Small area around click
+      const offsetLng = lng + (Math.random() - 0.5) * 0.002;
+      
+      reports.push({
+        id: `${category}-${Date.now()}-${i}`,
+        type: category as Detection['type'],
+        location: { lat: offsetLat, lng: offsetLng },
+        confidence: 0.7 + Math.random() * 0.3,
+        timestamp: new Date(Date.now() - Math.random() * 86400000).toISOString(), // Random time in last day
+        description: getReportDescription(category),
+        image: Math.random() > 0.5 ? '/placeholder-image.jpg' : undefined
+      });
+    }
+    
+    return reports;
+  };
+
+  const getReportDescription = (category: string) => {
+    const descriptions = {
+      trash: [
+        'Large pile of litter near bus stop',
+        'Overflowing garbage can needs attention',
+        'Food containers scattered on sidewalk',
+        'Cigarette butts and debris accumulation'
+      ],
+      graffiti: [
+        'Unauthorized tagging on building wall',
+        'Spray paint vandalism on public property',
+        'Multiple graffiti tags require removal',
+        'Fresh graffiti on storefront'
+      ],
+      infrastructure: [
+        'Pothole causing traffic disruption',
+        'Broken streetlight needs repair',
+        'Damaged sidewalk creating safety hazard',
+        'Faulty traffic signal timing'
+      ],
+      road_blocked: [
+        'Construction blocking lane',
+        'Vehicle breakdown causing delays',
+        'Emergency response blocking road',
+        'Utility work in progress'
+      ]
+    };
+    
+    const options = descriptions[category as keyof typeof descriptions] || descriptions.trash;
+    return options[Math.floor(Math.random() * options.length)];
+  };
+
   // Generate heatmap data for demo
   const generateHeatmapData = (category: string) => {
     const data = [];
@@ -144,6 +204,40 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
         heatmapLayers.current[category] = heatmap;
       });
+
+      // Add click listener for heatmap interactions
+      const clickListener = googleMapRef.current.addListener('click', (event: any) => {
+        const clickLat = event.latLng.lat();
+        const clickLng = event.latLng.lng();
+        
+        // Find the closest heatmap category to the click
+        let closestCategory = '';
+        let minDistance = Infinity;
+        
+        activeCategories.forEach(category => {
+          const distance = Math.random(); // Simplified - in real app would calculate actual distance to heatmap points
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestCategory = category;
+          }
+        });
+        
+        if (closestCategory && minDistance < 0.5) { // If click is near a heatmap area
+          const reports = generateReportsForArea(clickLat, clickLng, closestCategory);
+          setSelectedReports(reports);
+          setSelectedLocation({ lat: clickLat, lng: clickLng });
+          setSelectedCategory(closestCategory);
+          setShowReportsModal(true);
+        }
+      });
+
+      // Store listener for cleanup
+      (googleMapRef.current as any).heatmapClickListener = clickListener;
+    } else {
+      // Remove click listener when not in heatmap mode
+      if ((googleMapRef.current as any).heatmapClickListener) {
+        (window as any).google.maps.event.removeListener((googleMapRef.current as any).heatmapClickListener);
+      }
     }
   };
 
@@ -297,7 +391,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
               {Object.entries(heatmapCategories).map(([key, config]) => (
                 <label 
                   key={key}
-                  className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded"
+                  className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
                 >
                   <input
                     type="checkbox"
@@ -306,9 +400,26 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
                     className="rounded border-gray-300"
                   />
                   <span className="text-lg">{config.icon}</span>
-                  <span className="text-sm text-gray-700">{config.name}</span>
+                  <span className="text-sm text-gray-700 flex-1">{config.name}</span>
+                  <span className="text-xs text-gray-500">
+                    {Math.floor(Math.random() * 20) + 5} reports
+                  </span>
                 </label>
               ))}
+        </div>
+
+        {/* Heatmap Reports Modal */}
+        <HeatmapReportsModal
+          isOpen={showReportsModal}
+          onClose={() => setShowReportsModal(false)}
+          reports={selectedReports}
+          location={selectedLocation}
+          category={selectedCategory}
+        />
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <p className="text-xs text-gray-500">
+                💡 Click on heatmap hotspots to view individual reports
+              </p>
             </div>
           </div>
         )}
