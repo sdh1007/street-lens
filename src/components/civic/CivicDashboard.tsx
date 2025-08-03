@@ -113,7 +113,7 @@ export const CivicDashboard: React.FC = () => {
         <div className="h-[75vh] min-h-[600px]">
           <PanelGroup direction="horizontal" className="h-full rounded-xl overflow-hidden shadow-2xl">
             {/* Video Player Panel */}
-            <Panel defaultSize={60} minSize={35} className="relative">
+            <Panel defaultSize={50} minSize={35} className="relative">
               <div className="h-full animate-fade-in">
                 <RecordedVideoPlayer
                   currentLocation={currentLocation}
@@ -136,30 +136,10 @@ export const CivicDashboard: React.FC = () => {
             </PanelResizeHandle>
             
             {/* Map Panel */}
-            <Panel defaultSize={40} minSize={25} className="relative">
-              <div className="h-full space-y-3 p-3 bg-muted/10 animate-slide-in-right">
-                {/* Location Controls */}
-                <div className="flex gap-2 justify-end">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={getCurrentPosition}
-                    disabled={locationLoading}
-                    className="flex items-center gap-2 hover-lift focus-ring bg-card/80 backdrop-blur-sm border-border/50"
-                  >
-                    {locationLoading ? (
-                      <div className="w-3 h-3 border border-muted-foreground border-t-civic-navy rounded-full animate-spin" />
-                    ) : (
-                      <Navigation className="h-3 w-3" />
-                    )}
-                    <span className="hidden sm:inline">
-                      {locationLoading ? 'Getting Location...' : 'Update Location'}
-                    </span>
-                  </Button>
-                </div>
-                
+            <Panel defaultSize={50} minSize={25} className="relative">
+              <div className="h-full p-3 bg-muted/10 animate-slide-in-right">
                 {/* Map Container */}
-                <div className="flex-1 rounded-xl overflow-hidden shadow-xl">
+                <div className="h-full rounded-xl overflow-hidden shadow-xl">
                   <InteractiveMap
                     detections={mockDetections}
                     gpsTrail={gpsTrail}
